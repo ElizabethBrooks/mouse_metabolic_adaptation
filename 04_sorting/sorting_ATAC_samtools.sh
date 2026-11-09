@@ -11,6 +11,7 @@
 # usage: sbatch sorting_ATAC_samtools.sh
 #Submitted batch job 24317556
 #Submitted batch job 32495027
+#Submitted batch job 32497997
 
 # Required modules for servers
 module load samtools
