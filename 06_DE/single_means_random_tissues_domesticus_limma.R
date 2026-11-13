@@ -24,7 +24,7 @@ plotColors <- carto_pal(12, "Safe")
 plotColorSubset <- c(plotColors[4], plotColors[5], plotColors[6])
 
 # set working directory
-workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DA_14Sep2026/single_means_random_tissues"
+workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DA_12Nov2026/single_means_random_tissues_domesticus"
 dir.create(workingDir)
 setwd(workingDir)
 
@@ -39,11 +39,17 @@ cutFDR <- 0.05
 
 # set LFC cut
 #cutFC <- 1.2
-cutLFC <- log2(1.2)
+#cutLFC <- log2(1.2)
+cutLFC <- 0
 
 # trim the data table to remove lines with counting statistics (htseq)
 removeList <- c("__no_feature", "__ambiguous", "__too_low_aQual", "__not_aligned", "__alignment_not_unique")
 countsTable <- inputTable[!row.names(inputTable) %in% removeList,]
+
+# remove castaneus samples
+remove <- rownames(factors[grepl("CAST", factors$mouseline),])
+countsTable <- select(all_of(countsTable), -c(remove))
+factors <- factors[!grepl("CAST", factors$mouseline),]
 
 # convert the grouping data into factors 
 targets <- as.data.frame(lapply(factors, as.factor))
@@ -176,32 +182,18 @@ factor_MANF_LIV <- factor_MANF[grepl("LIV", factor_MANF)]
 factor_MANF_LIV_Ad <- factor_MANF_LIV[grepl("Ad_lib", factor_MANF_LIV)]
 factor_MANF_LIV_M_Ad <- factor_MANF_LIV_Ad[grepl("Male", factor_MANF_LIV_Ad)]
 factor_MANF_LIV_Food <- factor_MANF_LIV[grepl("Food_Restriction", factor_MANF_LIV)]
-factor_CAST <- factor_names[grepl("CAST", factor_names)]
-factor_CAST_Ad <- factor_CAST[grepl("Ad_lib", factor_CAST)]
-factor_CAST_Food <- factor_CAST[grepl("Food_Restriction", factor_CAST)]
-factor_CAST_F <- factor_CAST[grepl("Female", factor_CAST)]
-factor_CAST_M <- factor_CAST[grepl("Male", factor_CAST)]
-factor_CAST_M_Ad <- factor_CAST_M[grepl("Ad_lib", factor_CAST_M)]
-factor_CAST_M_Food <- factor_CAST_M[grepl("Food_Restriction", factor_CAST_M)]
-factor_CAST_BAT <- factor_CAST[grepl("BAT", factor_CAST)]
-factor_CAST_BAT_Ad <- factor_CAST_BAT[grepl("Ad_lib", factor_CAST_BAT)]
-factor_CAST_BAT_M_Ad <- factor_CAST_BAT_Ad[grepl("Male", factor_CAST_BAT_Ad)]
-factor_CAST_BAT_Food <- factor_CAST_BAT[grepl("Food_Restriction", factor_CAST_BAT)]
-factor_CAST_WAT <- factor_CAST[grepl("WAT", factor_CAST)]
-factor_CAST_WAT_Ad <- factor_CAST_WAT[grepl("Ad_lib", factor_CAST_WAT)]
-factor_CAST_WAT_M_Ad <- factor_CAST_WAT_Ad[grepl("Male", factor_CAST_WAT_Ad)]
-factor_CAST_WAT_Food <- factor_CAST_WAT[grepl("Food_Restriction", factor_CAST_WAT)]
-factor_CAST_HYP <- factor_CAST[grepl("HYP", factor_CAST)]
-factor_CAST_HYP_Ad <- factor_CAST_HYP[grepl("Ad_lib", factor_CAST_HYP)]
-factor_CAST_HYP_M_Ad <- factor_CAST_HYP_Ad[grepl("Male", factor_CAST_HYP_Ad)]
-factor_CAST_HYP_Food <- factor_CAST_HYP[grepl("Food_Restriction", factor_CAST_HYP)]
-factor_CAST_LIV <- factor_CAST[grepl("LIV", factor_CAST)]
-factor_CAST_LIV_Ad <- factor_CAST_LIV[grepl("Ad_lib", factor_CAST_LIV)]
-factor_CAST_LIV_M_Ad <- factor_CAST_LIV_Ad[grepl("Male", factor_CAST_LIV_Ad)]
-factor_CAST_LIV_Food <- factor_CAST_LIV[grepl("Food_Restriction", factor_CAST_LIV)]
 
 # setup contrasts
 contrasts <- makeContrasts(
+  SARA_MANF=
+    eval(parse(text=paste(factor_SARA, collapse = "+")))/length(factor_SARA) -
+    eval(parse(text=paste(factor_MANF, collapse = "+")))/length(factor_MANF),
+  SARA_AdvsFood=
+    eval(parse(text=paste(factor_SARA_Ad, collapse = "+")))/length(factor_SARA_Ad) -
+    eval(parse(text=paste(factor_SARA_Food, collapse = "+")))/length(factor_SARA_Food),
+  MANF_AdvsFood=
+    eval(parse(text=paste(factor_MANF_Ad, collapse = "+")))/length(factor_MANF_Ad) -
+    eval(parse(text=paste(factor_MANF_Food, collapse = "+")))/length(factor_MANF_Food),
   SARA_BAT_M_AdvsFood=
     eval(parse(text=paste(factor_SARA_BAT_M_Ad, collapse = "+")))/length(factor_SARA_BAT_M_Ad) -
     eval(parse(text=paste(factor_SARA_BAT_Food, collapse = "+")))/length(factor_SARA_BAT_Food),
@@ -225,42 +217,6 @@ contrasts <- makeContrasts(
     eval(parse(text=paste(factor_MANF_HYP_Food, collapse = "+")))/length(factor_MANF_HYP_Food),
   MANF_LIV_M_AdvsFood=
     eval(parse(text=paste(factor_MANF_LIV_M_Ad, collapse = "+")))/length(factor_MANF_LIV_M_Ad) -
-    eval(parse(text=paste(factor_MANF_LIV_Food, collapse = "+")))/length(factor_MANF_LIV_Food),
-  CAST_BAT_M_AdvsFood=
-    eval(parse(text=paste(factor_CAST_BAT_M_Ad, collapse = "+")))/length(factor_CAST_BAT_M_Ad) -
-    eval(parse(text=paste(factor_CAST_BAT_Food, collapse = "+")))/length(factor_CAST_BAT_Food),
-  CAST_WAT_M_AdvsFood=
-    eval(parse(text=paste(factor_CAST_WAT_M_Ad, collapse = "+")))/length(factor_CAST_WAT_M_Ad) -
-    eval(parse(text=paste(factor_CAST_WAT_Food, collapse = "+")))/length(factor_CAST_WAT_Food),
-  CAST_HYP_M_AdvsFood=
-    eval(parse(text=paste(factor_CAST_HYP_M_Ad, collapse = "+")))/length(factor_CAST_HYP_M_Ad) -
-    eval(parse(text=paste(factor_CAST_HYP_Food, collapse = "+")))/length(factor_CAST_HYP_Food),
-  CAST_LIV_M_AdvsFood=
-    eval(parse(text=paste(factor_CAST_LIV_M_Ad, collapse = "+")))/length(factor_CAST_LIV_M_Ad) -
-    eval(parse(text=paste(factor_CAST_LIV_Food, collapse = "+")))/length(factor_CAST_LIV_Food),
-  CAST_SARA_BAT_M_Food=
-    eval(parse(text=paste(factor_CAST_BAT_Food, collapse = "+")))/length(factor_CAST_BAT_Food) -
-    eval(parse(text=paste(factor_SARA_BAT_Food, collapse = "+")))/length(factor_SARA_BAT_Food),
-  CAST_SARA_WAT_M_Food=
-    eval(parse(text=paste(factor_CAST_WAT_Food, collapse = "+")))/length(factor_CAST_WAT_Food) -
-    eval(parse(text=paste(factor_SARA_WAT_Food, collapse = "+")))/length(factor_SARA_WAT_Food),
-  CAST_SARA_HYP_M_Food=
-    eval(parse(text=paste(factor_CAST_HYP_Food, collapse = "+")))/length(factor_CAST_HYP_Food) -
-    eval(parse(text=paste(factor_SARA_HYP_Food, collapse = "+")))/length(factor_SARA_HYP_Food),
-  CAST_SARA_LIV_M_Food=
-    eval(parse(text=paste(factor_CAST_LIV_Food, collapse = "+")))/length(factor_CAST_LIV_Food) -
-    eval(parse(text=paste(factor_SARA_LIV_Food, collapse = "+")))/length(factor_SARA_LIV_Food),
-  CAST_MANF_BAT_M_Food=
-    eval(parse(text=paste(factor_CAST_BAT_Food, collapse = "+")))/length(factor_CAST_BAT_Food) -
-    eval(parse(text=paste(factor_MANF_BAT_Food, collapse = "+")))/length(factor_MANF_BAT_Food),
-  CAST_MANF_WAT_M_Food=
-    eval(parse(text=paste(factor_CAST_WAT_Food, collapse = "+")))/length(factor_CAST_WAT_Food) -
-    eval(parse(text=paste(factor_MANF_WAT_Food, collapse = "+")))/length(factor_MANF_WAT_Food),
-  CAST_MANF_HYP_M_Food=
-    eval(parse(text=paste(factor_CAST_HYP_Food, collapse = "+")))/length(factor_CAST_HYP_Food) -
-    eval(parse(text=paste(factor_MANF_HYP_Food, collapse = "+")))/length(factor_MANF_HYP_Food),
-  CAST_MANF_LIV_M_Food=
-    eval(parse(text=paste(factor_CAST_LIV_Food, collapse = "+")))/length(factor_CAST_LIV_Food) -
     eval(parse(text=paste(factor_MANF_LIV_Food, collapse = "+")))/length(factor_MANF_LIV_Food),
   levels=colnames(design)
 ) 
@@ -309,6 +265,9 @@ colnames(fitCont)
 ## CAST_MANF_LIV_M_Food
 
 # get genes < FDR and LFC cutoffs
+SARA_MANF_dge_sig <- topTable(fitCont, coef = "SARA_MANF", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
+treatment_SARA_dge_sig <- topTable(fitCont, coef = "SARA_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
+treatment_MANF_dge_sig <- topTable(fitCont, coef = "MANF_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
 # treatment among male tissues
 treatment_SARA_BAT_M_dge_sig <- topTable(fitCont, coef = "SARA_BAT_M_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
 treatment_SARA_WAT_M_dge_sig <- topTable(fitCont, coef = "SARA_WAT_M_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
@@ -318,21 +277,11 @@ treatment_MANF_BAT_M_dge_sig <- topTable(fitCont, coef = "MANF_BAT_M_AdvsFood", 
 treatment_MANF_WAT_M_dge_sig <- topTable(fitCont, coef = "MANF_WAT_M_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
 treatment_MANF_HYP_M_dge_sig <- topTable(fitCont, coef = "MANF_HYP_M_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
 treatment_MANF_LIV_M_dge_sig <- topTable(fitCont, coef = "MANF_LIV_M_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-treatment_CAST_BAT_M_dge_sig <- topTable(fitCont, coef = "CAST_BAT_M_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-treatment_CAST_WAT_M_dge_sig <- topTable(fitCont, coef = "CAST_WAT_M_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-treatment_CAST_HYP_M_dge_sig <- topTable(fitCont, coef = "CAST_HYP_M_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-treatment_CAST_LIV_M_dge_sig <- topTable(fitCont, coef = "CAST_LIV_M_AdvsFood", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-# evolved divergence
-food_CAST_SARA_BAT_M_dge_sig <- topTable(fitCont, coef = "CAST_SARA_BAT_M_Food", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-food_CAST_SARA_WAT_M_dge_sig <- topTable(fitCont, coef = "CAST_SARA_WAT_M_Food", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-food_CAST_SARA_HYP_M_dge_sig <- topTable(fitCont, coef = "CAST_SARA_HYP_M_Food", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-food_CAST_SARA_LIV_M_dge_sig <- topTable(fitCont, coef = "CAST_SARA_LIV_M_Food", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-food_CAST_MANF_BAT_M_dge_sig <- topTable(fitCont, coef = "CAST_MANF_BAT_M_Food", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-food_CAST_MANF_WAT_M_dge_sig <- topTable(fitCont, coef = "CAST_MANF_WAT_M_Food", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-food_CAST_MANF_HYP_M_dge_sig <- topTable(fitCont, coef = "CAST_MANF_HYP_M_Food", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
-food_CAST_MANF_LIV_M_dge_sig <- topTable(fitCont, coef = "CAST_MANF_LIV_M_Food", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
 
 # check the number of sig DE genes
+nrow(SARA_MANF_dge_sig)
+nrow(treatment_SARA_dge_sig)
+nrow(treatment_MANF_dge_sig)
 # treatment among male tissues
 nrow(treatment_SARA_BAT_M_dge_sig)
 nrow(treatment_SARA_WAT_M_dge_sig)
@@ -342,21 +291,20 @@ nrow(treatment_MANF_BAT_M_dge_sig)
 nrow(treatment_MANF_WAT_M_dge_sig)
 nrow(treatment_MANF_HYP_M_dge_sig)
 nrow(treatment_MANF_LIV_M_dge_sig)
-nrow(treatment_CAST_BAT_M_dge_sig)
-nrow(treatment_CAST_WAT_M_dge_sig)
-nrow(treatment_CAST_HYP_M_dge_sig)
-nrow(treatment_CAST_LIV_M_dge_sig)
-# evolved divergence
-nrow(food_CAST_SARA_BAT_M_dge_sig)
-nrow(food_CAST_SARA_WAT_M_dge_sig)
-nrow(food_CAST_SARA_HYP_M_dge_sig)
-nrow(food_CAST_SARA_LIV_M_dge_sig)
-nrow(food_CAST_MANF_BAT_M_dge_sig)
-nrow(food_CAST_MANF_WAT_M_dge_sig)
-nrow(food_CAST_MANF_HYP_M_dge_sig)
-nrow(food_CAST_MANF_LIV_M_dge_sig)
 
 # export tables of sig DE genes
+SARA_MANF_dge_sig_tbl <- as_tibble(SARA_MANF_dge_sig, rownames = "gene")
+SARA_MANF_out_file <- paste("SARA_MANF_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
+SARA_MANF_out_file <- paste(SARA_MANF_out_file, "csv", sep = ".")
+write.table(SARA_MANF_dge_sig_tbl, file=SARA_MANF_out_file, sep=",", row.names=FALSE, quote=FALSE)
+treatment_SARA_dge_sig_tbl <- as_tibble(treatment_SARA_dge_sig, rownames = "gene")
+treatment_SARA_out_file <- paste("treatment_SARA_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
+treatment_SARA_out_file <- paste(treatment_SARA_out_file, "csv", sep = ".")
+write.table(treatment_SARA_dge_sig_tbl, file=treatment_SARA_out_file, sep=",", row.names=FALSE, quote=FALSE)
+treatment_MANF_dge_sig_tbl <- as_tibble(treatment_MANF_dge_sig, rownames = "gene")
+treatment_MANF_out_file <- paste("treatment_MANF_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
+treatment_MANF_out_file <- paste(treatment_MANF_out_file, "csv", sep = ".")
+write.table(treatment_MANF_dge_sig_tbl, file=treatment_MANF_out_file, sep=",", row.names=FALSE, quote=FALSE)
 # male tissue SARA: treatment_SARA_BAT_M_dge_sig, treatment_SARA_WAT_M_dge_sig, treatment_SARA_HYP_M_dge_sig, treatment_SARA_LIV_M_dge_sig
 treatment_SARA_BAT_M_dge_sig_tbl <- as_tibble(treatment_SARA_BAT_M_dge_sig, rownames = "gene")
 treatment_SARA_BAT_M_out_file <- paste("treatment_SARA_BAT_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
@@ -391,58 +339,11 @@ treatment_MANF_LIV_M_dge_sig_tbl <- as_tibble(treatment_MANF_LIV_M_dge_sig, rown
 treatment_MANF_LIV_M_out_file <- paste("treatment_MANF_LIV_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
 treatment_MANF_LIV_M_out_file <- paste(treatment_MANF_LIV_M_out_file, "csv", sep = ".")
 write.table(treatment_MANF_LIV_M_dge_sig_tbl, file=treatment_MANF_LIV_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-# male tissue CAST: treatment_CAST_BAT_M_dge_sig, treatment_CAST_WAT_M_dge_sig, treatment_CAST_HYP_M_dge_sig, treatment_CAST_LIV_M_dge_sig
-treatment_CAST_BAT_M_dge_sig_tbl <- as_tibble(treatment_CAST_BAT_M_dge_sig, rownames = "gene")
-treatment_CAST_BAT_M_out_file <- paste("treatment_CAST_BAT_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-treatment_CAST_BAT_M_out_file <- paste(treatment_CAST_BAT_M_out_file, "csv", sep = ".")
-write.table(treatment_CAST_BAT_M_dge_sig_tbl, file=treatment_CAST_BAT_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-treatment_CAST_WAT_M_dge_sig_tbl <- as_tibble(treatment_CAST_WAT_M_dge_sig, rownames = "gene")
-treatment_CAST_WAT_M_out_file <- paste("treatment_CAST_WAT_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-treatment_CAST_WAT_M_out_file <- paste(treatment_CAST_WAT_M_out_file, "csv", sep = ".")
-write.table(treatment_CAST_WAT_M_dge_sig_tbl, file=treatment_CAST_WAT_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-treatment_CAST_HYP_M_dge_sig_tbl <- as_tibble(treatment_CAST_HYP_M_dge_sig, rownames = "gene")
-treatment_CAST_HYP_M_out_file <- paste("treatment_CAST_HYP_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-treatment_CAST_HYP_M_out_file <- paste(treatment_CAST_HYP_M_out_file, "csv", sep = ".")
-write.table(treatment_CAST_HYP_M_dge_sig_tbl, file=treatment_CAST_HYP_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-treatment_CAST_LIV_M_dge_sig_tbl <- as_tibble(treatment_CAST_LIV_M_dge_sig, rownames = "gene")
-treatment_CAST_LIV_M_out_file <- paste("treatment_CAST_LIV_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-treatment_CAST_LIV_M_out_file <- paste(treatment_CAST_LIV_M_out_file, "csv", sep = ".")
-write.table(treatment_CAST_LIV_M_dge_sig_tbl, file=treatment_CAST_LIV_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-# evolved divergence
-food_CAST_SARA_BAT_M_dge_sig_tbl <- as_tibble(food_CAST_SARA_BAT_M_dge_sig, rownames = "gene")
-food_CAST_SARA_BAT_M_out_file <- paste("food_CAST_SARA_BAT_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-food_CAST_SARA_BAT_M_out_file <- paste(food_CAST_SARA_BAT_M_out_file, "csv", sep = ".")
-write.table(food_CAST_SARA_BAT_M_dge_sig_tbl, file=food_CAST_SARA_BAT_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_SARA_WAT_M_dge_sig_tbl <- as_tibble(food_CAST_SARA_WAT_M_dge_sig, rownames = "gene")
-food_CAST_SARA_WAT_M_out_file <- paste("food_CAST_SARA_WAT_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-food_CAST_SARA_WAT_M_out_file <- paste(food_CAST_SARA_WAT_M_out_file, "csv", sep = ".")
-write.table(food_CAST_SARA_WAT_M_dge_sig_tbl, file=food_CAST_SARA_WAT_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_SARA_HYP_M_dge_sig_tbl <- as_tibble(food_CAST_SARA_HYP_M_dge_sig, rownames = "gene")
-food_CAST_SARA_HYP_M_out_file <- paste("food_CAST_SARA_HYP_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-food_CAST_SARA_HYP_M_out_file <- paste(food_CAST_SARA_HYP_M_out_file, "csv", sep = ".")
-write.table(food_CAST_SARA_HYP_M_dge_sig_tbl, file=food_CAST_SARA_HYP_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_SARA_LIV_M_dge_sig_tbl <- as_tibble(food_CAST_SARA_LIV_M_dge_sig, rownames = "gene")
-food_CAST_SARA_LIV_M_out_file <- paste("food_CAST_SARA_LIV_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-food_CAST_SARA_LIV_M_out_file <- paste(food_CAST_SARA_LIV_M_out_file, "csv", sep = ".")
-write.table(food_CAST_SARA_LIV_M_dge_sig_tbl, file=food_CAST_SARA_LIV_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_MANF_BAT_M_dge_sig_tbl <- as_tibble(food_CAST_MANF_BAT_M_dge_sig, rownames = "gene")
-food_CAST_MANF_BAT_M_out_file <- paste("food_CAST_MANF_BAT_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-food_CAST_MANF_BAT_M_out_file <- paste(food_CAST_MANF_BAT_M_out_file, "csv", sep = ".")
-write.table(food_CAST_MANF_BAT_M_dge_sig_tbl, file=food_CAST_MANF_BAT_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_MANF_WAT_M_dge_sig_tbl <- as_tibble(food_CAST_MANF_WAT_M_dge_sig, rownames = "gene")
-food_CAST_MANF_WAT_M_out_file <- paste("food_CAST_MANF_WAT_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-food_CAST_MANF_WAT_M_out_file <- paste(food_CAST_MANF_WAT_M_out_file, "csv", sep = ".")
-write.table(food_CAST_MANF_WAT_M_dge_sig_tbl, file=food_CAST_MANF_WAT_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_MANF_HYP_M_dge_sig_tbl <- as_tibble(food_CAST_MANF_HYP_M_dge_sig, rownames = "gene")
-food_CAST_MANF_HYP_M_out_file <- paste("food_CAST_MANF_HYP_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-food_CAST_MANF_HYP_M_out_file <- paste(food_CAST_MANF_HYP_M_out_file, "csv", sep = ".")
-write.table(food_CAST_MANF_HYP_M_dge_sig_tbl, file=food_CAST_MANF_HYP_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_MANF_LIV_M_dge_sig_tbl <- as_tibble(food_CAST_MANF_LIV_M_dge_sig, rownames = "gene")
-food_CAST_MANF_LIV_M_out_file <- paste("food_CAST_MANF_LIV_M_dge_sig", "FDR", cutFDR, "LFC", cutLFC, sep = "_")
-food_CAST_MANF_LIV_M_out_file <- paste(food_CAST_MANF_LIV_M_out_file, "csv", sep = ".")
-write.table(food_CAST_MANF_LIV_M_dge_sig_tbl, file=food_CAST_MANF_LIV_M_out_file, sep=",", row.names=FALSE, quote=FALSE)
 
 # get all results of hypothesis tests
+SARA_MANF_dge_results <- topTable(fitCont, coef = "SARA_MANF", number = nrow(dge))
+treatment_SARA_dge_results <- topTable(fitCont, coef = "SARA_AdvsFood", number = nrow(dge))
+treatment_MANF_dge_results <- topTable(fitCont, coef = "MANF_AdvsFood", number = nrow(dge))
 # male tissue SARA: treatment_SARA_BAT_M_dge_sig, treatment_SARA_WAT_M_dge_sig, treatment_SARA_HYP_M_dge_sig, treatment_SARA_LIV_M_dge_sig
 treatment_SARA_BAT_M_dge_results <- topTable(fitCont, coef = "SARA_BAT_M_AdvsFood", number = nrow(dge))
 treatment_SARA_WAT_M_dge_results <- topTable(fitCont, coef = "SARA_WAT_M_AdvsFood", number = nrow(dge))
@@ -453,22 +354,14 @@ treatment_MANF_BAT_M_dge_results <- topTable(fitCont, coef = "MANF_BAT_M_AdvsFoo
 treatment_MANF_WAT_M_dge_results <- topTable(fitCont, coef = "MANF_WAT_M_AdvsFood", number = nrow(dge))
 treatment_MANF_HYP_M_dge_results <- topTable(fitCont, coef = "MANF_HYP_M_AdvsFood", number = nrow(dge))
 treatment_MANF_LIV_M_dge_results <- topTable(fitCont, coef = "MANF_LIV_M_AdvsFood", number = nrow(dge))
-# male tissue CAST: treatment_CAST_BAT_M_dge_sig, treatment_CAST_WAT_M_dge_sig, treatment_CAST_HYP_M_dge_sig, treatment_CAST_LIV_M_dge_sig
-treatment_CAST_BAT_M_dge_results <- topTable(fitCont, coef = "CAST_BAT_M_AdvsFood", number = nrow(dge))
-treatment_CAST_WAT_M_dge_results <- topTable(fitCont, coef = "CAST_WAT_M_AdvsFood", number = nrow(dge))
-treatment_CAST_HYP_M_dge_results <- topTable(fitCont, coef = "CAST_HYP_M_AdvsFood", number = nrow(dge))
-treatment_CAST_LIV_M_dge_results <- topTable(fitCont, coef = "CAST_LIV_M_AdvsFood", number = nrow(dge))
-# evolved divergence
-food_CAST_SARA_BAT_M_dge_results <- topTable(fitCont, coef = "CAST_SARA_BAT_M_Food", number = nrow(dge))
-food_CAST_SARA_WAT_M_dge_results <- topTable(fitCont, coef = "CAST_SARA_WAT_M_Food", number = nrow(dge))
-food_CAST_SARA_HYP_M_dge_results <- topTable(fitCont, coef = "CAST_SARA_HYP_M_Food", number = nrow(dge))
-food_CAST_SARA_LIV_M_dge_results <- topTable(fitCont, coef = "CAST_SARA_LIV_M_Food", number = nrow(dge))
-food_CAST_MANF_BAT_M_dge_results <- topTable(fitCont, coef = "CAST_MANF_BAT_M_Food", number = nrow(dge))
-food_CAST_MANF_WAT_M_dge_results <- topTable(fitCont, coef = "CAST_MANF_WAT_M_Food", number = nrow(dge))
-food_CAST_MANF_HYP_M_dge_results <- topTable(fitCont, coef = "CAST_MANF_HYP_M_Food", number = nrow(dge))
-food_CAST_MANF_LIV_M_dge_results <- topTable(fitCont, coef = "CAST_MANF_LIV_M_Food", number = nrow(dge))
 
 # export table of DE genes
+SARA_MANF_dge_results_tbl <- as_tibble(SARA_MANF_dge_results, rownames = "gene")
+write.table(SARA_MANF_dge_results_tbl, file="SARA_MANF_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
+treatment_SARA_dge_results_tbl <- as_tibble(treatment_SARA_dge_results, rownames = "gene")
+write.table(treatment_SARA_dge_results_tbl, file="treatment_SARA_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
+treatment_MANF_dge_results_tbl <- as_tibble(treatment_MANF_dge_results, rownames = "gene")
+write.table(treatment_MANF_dge_results_tbl, file="treatment_MANF_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
 # male tissue SARA: treatment_SARA_BAT_M_dge_sig, treatment_SARA_WAT_M_dge_sig, , treatment_SARA_LIV_M_dge_sig
 treatment_SARA_BAT_M_dge_results_tbl <- as_tibble(treatment_SARA_BAT_M_dge_results, rownames = "gene")
 write.table(treatment_SARA_BAT_M_dge_results_tbl, file="treatment_SARA_BAT_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
@@ -487,32 +380,9 @@ treatment_MANF_HYP_M_dge_results_tbl <- as_tibble(treatment_MANF_HYP_M_dge_resul
 write.table(treatment_MANF_HYP_M_dge_results_tbl, file="treatment_MANF_HYP_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
 treatment_MANF_LIV_M_dge_results_tbl <- as_tibble(treatment_MANF_LIV_M_dge_results, rownames = "gene")
 write.table(treatment_MANF_LIV_M_dge_results_tbl, file="treatment_MANF_LIV_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-# male tissue CAST: treatment_CAST_BAT_M_dge_sig, treatment_CAST_WAT_M_dge_sig, , treatment_CAST_LIV_M_dge_sig
-treatment_CAST_BAT_M_dge_results_tbl <- as_tibble(treatment_CAST_BAT_M_dge_results, rownames = "gene")
-write.table(treatment_CAST_BAT_M_dge_results_tbl, file="treatment_CAST_BAT_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-treatment_CAST_WAT_M_dge_results_tbl <- as_tibble(treatment_CAST_WAT_M_dge_results, rownames = "gene")
-write.table(treatment_CAST_WAT_M_dge_results_tbl, file="treatment_CAST_WAT_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-treatment_CAST_HYP_M_dge_results_tbl <- as_tibble(treatment_CAST_HYP_M_dge_results, rownames = "gene")
-write.table(treatment_CAST_HYP_M_dge_results_tbl, file="treatment_CAST_HYP_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-treatment_CAST_LIV_M_dge_results_tbl <- as_tibble(treatment_CAST_LIV_M_dge_results, rownames = "gene")
-write.table(treatment_CAST_LIV_M_dge_results_tbl, file="treatment_CAST_LIV_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-# evolved divergence
-food_CAST_SARA_BAT_M_dge_results_tbl <- as_tibble(food_CAST_SARA_BAT_M_dge_results, rownames = "gene")
-write.table(food_CAST_SARA_BAT_M_dge_results_tbl, file="food_CAST_SARA_BAT_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_SARA_WAT_M_dge_results_tbl <- as_tibble(food_CAST_SARA_WAT_M_dge_results, rownames = "gene")
-write.table(food_CAST_SARA_WAT_M_dge_results_tbl, file="food_CAST_SARA_WAT_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_SARA_HYP_M_dge_results_tbl <- as_tibble(food_CAST_SARA_HYP_M_dge_results, rownames = "gene")
-write.table(food_CAST_SARA_HYP_M_dge_results_tbl, file="food_CAST_SARA_HYP_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_SARA_LIV_M_dge_results_tbl <- as_tibble(food_CAST_SARA_LIV_M_dge_results, rownames = "gene")
-write.table(food_CAST_SARA_LIV_M_dge_results_tbl, file="food_CAST_SARA_LIV_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_MANF_BAT_M_dge_results_tbl <- as_tibble(food_CAST_MANF_BAT_M_dge_results, rownames = "gene")
-write.table(food_CAST_MANF_BAT_M_dge_results_tbl, file="food_CAST_MANF_BAT_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_MANF_WAT_M_dge_results_tbl <- as_tibble(food_CAST_MANF_WAT_M_dge_results, rownames = "gene")
-write.table(food_CAST_MANF_WAT_M_dge_results_tbl, file="food_CAST_MANF_WAT_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_MANF_HYP_M_dge_results_tbl <- as_tibble(food_CAST_MANF_HYP_M_dge_results, rownames = "gene")
-write.table(food_CAST_MANF_HYP_M_dge_results_tbl, file="food_CAST_MANF_HYP_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
-food_CAST_MANF_LIV_M_dge_results_tbl <- as_tibble(food_CAST_MANF_LIV_M_dge_results, rownames = "gene")
-write.table(food_CAST_MANF_LIV_M_dge_results_tbl, file="food_CAST_MANF_LIV_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
+
+
+
 
 # subset counts table by DE gene set
 # SARA

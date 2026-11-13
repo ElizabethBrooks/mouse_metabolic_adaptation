@@ -24,7 +24,7 @@ plotColors <- carto_pal(12, "Safe")
 plotColorSubset <- c(plotColors[4], plotColors[5], plotColors[6])
 
 # set working directory
-workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DA_28Oct2026/single_means_random_BAT_domesticus_LFC0"
+workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DA_12Nov2026/single_means_random_BAT_domesticus_LFC0"
 dir.create(workingDir)
 setwd(workingDir)
 
@@ -152,18 +152,6 @@ factor_SARA_BAT <- factor_SARA[grepl("BAT", factor_SARA)]
 factor_SARA_BAT_Ad <- factor_SARA_BAT[grepl("Ad_lib", factor_SARA_BAT)]
 factor_SARA_BAT_M_Ad <- factor_SARA_BAT_Ad[grepl("Male", factor_SARA_BAT_Ad)]
 factor_SARA_BAT_Food <- factor_SARA_BAT[grepl("Food_Restriction", factor_SARA_BAT)]
-factor_SARA_WAT <- factor_SARA[grepl("WAT", factor_SARA)]
-factor_SARA_WAT_Ad <- factor_SARA_WAT[grepl("Ad_lib", factor_SARA_WAT)]
-factor_SARA_WAT_M_Ad <- factor_SARA_WAT_Ad[grepl("Male", factor_SARA_WAT_Ad)]
-factor_SARA_WAT_Food <- factor_SARA_WAT[grepl("Food_Restriction", factor_SARA_WAT)]
-factor_SARA_HYP <- factor_SARA[grepl("HYP", factor_SARA)]
-factor_SARA_HYP_Ad <- factor_SARA_HYP[grepl("Ad_lib", factor_SARA_HYP)]
-factor_SARA_HYP_M_Ad <- factor_SARA_HYP_Ad[grepl("Male", factor_SARA_HYP_Ad)]
-factor_SARA_HYP_Food <- factor_SARA_HYP[grepl("Food_Restriction", factor_SARA_HYP)]
-factor_SARA_LIV <- factor_SARA[grepl("LIV", factor_SARA)]
-factor_SARA_LIV_Ad <- factor_SARA_LIV[grepl("Ad_lib", factor_SARA_LIV)]
-factor_SARA_LIV_M_Ad <- factor_SARA_LIV_Ad[grepl("Male", factor_SARA_LIV_Ad)]
-factor_SARA_LIV_Food <- factor_SARA_LIV[grepl("Food_Restriction", factor_SARA_LIV)]
 factor_MANF <- factor_names[grepl("MANF", factor_names)]
 factor_MANF_Ad <- factor_MANF[grepl("Ad_lib", factor_MANF)]
 factor_MANF_Food <- factor_MANF[grepl("Food_Restriction", factor_MANF)]
@@ -206,27 +194,6 @@ fitCont <- eBayes(fitCont)
 
 # get names of available coefficients and contrasts for testing
 colnames(fitCont)
-
-# treatment: Food_Restriction vs Ad_lib (12-hr food restriction vs. unlimited food, male mice only)
-# tissue: LIV (liver), HYP (hypothalamus), BAT (brown adipose), WAT (white adipose)
-# mouseline: MANF vs SARA (skinny vs fat)
-# sex: M vs F (unlimited food)
-
-# How do male SARA tissues respond to 12-hr food restriction?
-## SARA_BAT_M_AdvsFood
-## SARA_WAT_M_AdvsFood
-## SARA_HYP_M_AdvsFood
-## SARA_LIV_M_AdvsFood
-# How do male MANF tissues respond to 12-hr food restriction?
-## MANF_BAT_M_AdvsFood
-## MANF_WAT_M_AdvsFood
-## MANF_HYP_M_AdvsFood
-## MANF_LIV_M_AdvsFood
-# How do SARA M respond differently than MANF M to 12-hr food restriction? 
-## SARAvsMANF_BAT_M_AdvsFood
-## SARAvsMANF_WAT_M_AdvsFood
-## SARAvsMANF_HYP_M_AdvsFood
-## SARAvsMANF_LIV_M_AdvsFood
 
 # get genes < FDR and LFC cutoffs
 # treatment among male tissues
@@ -303,17 +270,17 @@ rownames(treatment_SARA_MANF_BAT_M_dge_sig_tbl_logcounts) <- treatment_SARA_MANF
 
 # heatmap of results
 # SARA
-jpeg("treatment_SARA_BAT_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(treatment_SARA_BAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
+#jpeg("treatment_SARA_BAT_M_dge_sig_tbl_logcounts.jpg")
+#heatmap(as.matrix(treatment_SARA_BAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
+#dev.off()
 # MANF
 jpeg("treatment_MANF_BAT_M_dge_sig_tbl_logcounts.jpg")
 heatmap(as.matrix(treatment_MANF_BAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
 dev.off()
 # SARA vs MANF
-jpeg("treatment_SARA_MANF_BAT_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(treatment_SARA_MANF_BAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
+#jpeg("treatment_SARA_MANF_BAT_M_dge_sig_tbl_logcounts.jpg")
+#heatmap(as.matrix(treatment_SARA_MANF_BAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
+#dev.off()
 
 # sort results by gene name
 # SARA
