@@ -48,7 +48,7 @@ countsTable <- inputTable[!row.names(inputTable) %in% removeList,]
 
 # remove castaneus samples
 remove <- rownames(factors[grepl("CAST", factors$mouseline),])
-countsTable <- select(all_of(countsTable), -c(remove))
+countsTable <- dplyr::select(all_of(countsTable), -c(remove))
 factors <- factors[!grepl("CAST", factors$mouseline),]
 
 # convert the grouping data into factors 
@@ -75,8 +75,8 @@ sample_group <- factor(paste(targets$mouseline, targets$tissue, targets$sex, tar
 # specify the reference level
 sample_group <- relevel(sample_group, ref = "SARA.BAT.Male.Ad_lib")
 
-# there are at least 2 samples per individual
-smallestGroupSize <- 2
+# there are at least 1 samples per individual
+smallestGroupSize <- 1
 
 # keep only rows that have a count of at least 10 for a minimal number of samples
 keep <- rowSums(cpm(countsTable) >= 0.1) >= smallestGroupSize
@@ -249,20 +249,6 @@ colnames(fitCont)
 ## MANF_WAT_M_AdvsFood
 ## MANF_HYP_M_AdvsFood
 ## MANF_LIV_M_AdvsFood
-# How do male CAST tissues respond to 12-hr food restriction?
-## CAST_BAT_M_AdvsFood
-## CAST_WAT_M_AdvsFood
-## CAST_HYP_M_AdvsFood
-## CAST_LIV_M_AdvsFood
-# The relationship between gene expression plasticity and evolved divergence in tissues
-## CAST_SARA_BAT_M_Food
-## CAST_SARA_WAT_M_Food
-## CAST_SARA_HYP_M_Food
-## CAST_SARA_LIV_M_Food
-## CAST_MANF_BAT_M_Food
-## CAST_MANF_WAT_M_Food
-## CAST_MANF_HYP_M_Food
-## CAST_MANF_LIV_M_Food
 
 # get genes < FDR and LFC cutoffs
 SARA_MANF_dge_sig <- topTable(fitCont, coef = "SARA_MANF", number = nrow(dge), p.value = cutFDR, lfc = cutLFC)
@@ -381,10 +367,13 @@ write.table(treatment_MANF_HYP_M_dge_results_tbl, file="treatment_MANF_HYP_M_dge
 treatment_MANF_LIV_M_dge_results_tbl <- as_tibble(treatment_MANF_LIV_M_dge_results, rownames = "gene")
 write.table(treatment_MANF_LIV_M_dge_results_tbl, file="treatment_MANF_LIV_M_dge_results.csv", sep=",", row.names=FALSE, quote=FALSE)
 
-
-
-
 # subset counts table by DE gene set
+SARA_MANF_dge_sig_tbl.keep <- normListLog$gene %in% SARA_MANF_dge_sig_tbl$gene
+SARA_MANF_dge_sig_tbl_logcounts <- normListLog[SARA_MANF_dge_sig_tbl.keep, ]
+treatment_SARA_dge_sig_tbl.keep <- normListLog$gene %in% treatment_SARA_dge_sig_tbl$gene
+treatment_SARA_dge_sig_tbl_logcounts <- normListLog[treatment_SARA_dge_sig_tbl.keep, ]
+treatment_MANF_dge_sig_tbl.keep <- normListLog$gene %in% treatment_MANF_dge_sig_tbl$gene
+treatment_MANF_dge_sig_tbl_logcounts <- normListLog[treatment_MANF_dge_sig_tbl.keep, ]
 # SARA
 treatment_SARA_BAT_M_dge_sig_tbl.keep <- normListLog$gene %in% treatment_SARA_BAT_M_dge_sig_tbl$gene
 treatment_SARA_BAT_M_dge_sig_tbl_logcounts <- normListLog[treatment_SARA_BAT_M_dge_sig_tbl.keep, ]
@@ -403,34 +392,17 @@ treatment_MANF_HYP_M_dge_sig_tbl.keep <- normListLog$gene %in% treatment_MANF_HY
 treatment_MANF_HYP_M_dge_sig_tbl_logcounts <- normListLog[treatment_MANF_HYP_M_dge_sig_tbl.keep, ]
 treatment_MANF_LIV_M_dge_sig_tbl.keep <- normListLog$gene %in% treatment_MANF_LIV_M_dge_sig_tbl$gene
 treatment_MANF_LIV_M_dge_sig_tbl_logcounts <- normListLog[treatment_MANF_LIV_M_dge_sig_tbl.keep, ]
-# CAST
-treatment_CAST_BAT_M_dge_sig_tbl.keep <- normListLog$gene %in% treatment_CAST_BAT_M_dge_sig_tbl$gene
-treatment_CAST_BAT_M_dge_sig_tbl_logcounts <- normListLog[treatment_CAST_BAT_M_dge_sig_tbl.keep, ]
-treatment_CAST_WAT_M_dge_sig_tbl.keep <- normListLog$gene %in% treatment_CAST_WAT_M_dge_sig_tbl$gene
-treatment_CAST_WAT_M_dge_sig_tbl_logcounts <- normListLog[treatment_CAST_WAT_M_dge_sig_tbl.keep, ]
-treatment_CAST_HYP_M_dge_sig_tbl.keep <- normListLog$gene %in% treatment_CAST_HYP_M_dge_sig_tbl$gene
-treatment_CAST_HYP_M_dge_sig_tbl_logcounts <- normListLog[treatment_CAST_HYP_M_dge_sig_tbl.keep, ]
-treatment_CAST_LIV_M_dge_sig_tbl.keep <- normListLog$gene %in% treatment_CAST_LIV_M_dge_sig_tbl$gene
-treatment_CAST_LIV_M_dge_sig_tbl_logcounts <- normListLog[treatment_CAST_LIV_M_dge_sig_tbl.keep, ]
-# evolved divergence
-food_CAST_SARA_BAT_M_dge_sig_tbl.keep <- normListLog$gene %in% food_CAST_SARA_BAT_M_dge_sig_tbl$gene
-food_CAST_SARA_BAT_M_dge_sig_tbl_logcounts <- normListLog[food_CAST_SARA_BAT_M_dge_sig_tbl.keep, ]
-food_CAST_SARA_WAT_M_dge_sig_tbl.keep <- normListLog$gene %in% food_CAST_SARA_WAT_M_dge_sig_tbl$gene
-food_CAST_SARA_WAT_M_dge_sig_tbl_logcounts <- normListLog[food_CAST_SARA_WAT_M_dge_sig_tbl.keep, ]
-food_CAST_SARA_HYP_M_dge_sig_tbl.keep <- normListLog$gene %in% food_CAST_SARA_HYP_M_dge_sig_tbl$gene
-food_CAST_SARA_HYP_M_dge_sig_tbl_logcounts <- normListLog[food_CAST_SARA_HYP_M_dge_sig_tbl.keep, ]
-food_CAST_SARA_LIV_M_dge_sig_tbl.keep <- normListLog$gene %in% food_CAST_SARA_LIV_M_dge_sig_tbl$gene
-food_CAST_SARA_LIV_M_dge_sig_tbl_logcounts <- normListLog[food_CAST_SARA_LIV_M_dge_sig_tbl.keep, ]
-food_CAST_MANF_BAT_M_dge_sig_tbl.keep <- normListLog$gene %in% food_CAST_MANF_BAT_M_dge_sig_tbl$gene
-food_CAST_MANF_BAT_M_dge_sig_tbl_logcounts <- normListLog[food_CAST_MANF_BAT_M_dge_sig_tbl.keep, ]
-food_CAST_MANF_WAT_M_dge_sig_tbl.keep <- normListLog$gene %in% food_CAST_MANF_WAT_M_dge_sig_tbl$gene
-food_CAST_MANF_WAT_M_dge_sig_tbl_logcounts <- normListLog[food_CAST_MANF_WAT_M_dge_sig_tbl.keep, ]
-food_CAST_MANF_HYP_M_dge_sig_tbl.keep <- normListLog$gene %in% food_CAST_MANF_HYP_M_dge_sig_tbl$gene
-food_CAST_MANF_HYP_M_dge_sig_tbl_logcounts <- normListLog[food_CAST_MANF_HYP_M_dge_sig_tbl.keep, ]
-food_CAST_MANF_LIV_M_dge_sig_tbl.keep <- normListLog$gene %in% food_CAST_MANF_LIV_M_dge_sig_tbl$gene
-food_CAST_MANF_LIV_M_dge_sig_tbl_logcounts <- normListLog[food_CAST_MANF_LIV_M_dge_sig_tbl.keep, ]
 
 # format for plotting
+SARA_MANF_names <- SARA_MANF_dge_sig_tbl_logcounts$gene
+SARA_MANF_dge_sig_tbl_logcounts$gene <- NULL
+rownames(SARA_MANF_dge_sig_tbl_logcounts) <- SARA_MANF_names
+treatment_SARA_names <- treatment_SARA_dge_sig_tbl_logcounts$gene
+treatment_SARA_dge_sig_tbl_logcounts$gene <- NULL
+rownames(treatment_SARA_dge_sig_tbl_logcounts) <- treatment_SARA_names
+treatment_MANF_names <- treatment_MANF_dge_sig_tbl_logcounts$gene
+treatment_MANF_dge_sig_tbl_logcounts$gene <- NULL
+rownames(treatment_MANF_dge_sig_tbl_logcounts) <- treatment_MANF_names
 # SARA
 treatment_SARA_BAT_M_names <- treatment_SARA_BAT_M_dge_sig_tbl_logcounts$gene
 treatment_SARA_BAT_M_dge_sig_tbl_logcounts$gene <- NULL
@@ -457,46 +429,17 @@ rownames(treatment_MANF_HYP_M_dge_sig_tbl_logcounts) <- treatment_MANF_HYP_M_nam
 treatment_MANF_LIV_M_names <- treatment_MANF_LIV_M_dge_sig_tbl_logcounts$gene
 treatment_MANF_LIV_M_dge_sig_tbl_logcounts$gene <- NULL
 rownames(treatment_MANF_LIV_M_dge_sig_tbl_logcounts) <- treatment_MANF_LIV_M_names
-# CAST
-treatment_CAST_BAT_M_names <- treatment_CAST_BAT_M_dge_sig_tbl_logcounts$gene
-treatment_CAST_BAT_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(treatment_CAST_BAT_M_dge_sig_tbl_logcounts) <- treatment_CAST_BAT_M_names
-treatment_CAST_WAT_M_names <- treatment_CAST_WAT_M_dge_sig_tbl_logcounts$gene
-treatment_CAST_WAT_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(treatment_CAST_WAT_M_dge_sig_tbl_logcounts) <- treatment_CAST_WAT_M_names
-treatment_CAST_HYP_M_names <- treatment_CAST_HYP_M_dge_sig_tbl_logcounts$gene
-treatment_CAST_HYP_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(treatment_CAST_HYP_M_dge_sig_tbl_logcounts) <- treatment_CAST_HYP_M_names
-treatment_CAST_LIV_M_names <- treatment_CAST_LIV_M_dge_sig_tbl_logcounts$gene
-treatment_CAST_LIV_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(treatment_CAST_LIV_M_dge_sig_tbl_logcounts) <- treatment_CAST_LIV_M_names
-# evolved divergence
-food_CAST_SARA_BAT_M_names <- food_CAST_SARA_BAT_M_dge_sig_tbl_logcounts$gene
-food_CAST_SARA_BAT_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(food_CAST_SARA_BAT_M_dge_sig_tbl_logcounts) <- food_CAST_SARA_BAT_M_names
-food_CAST_SARA_WAT_M_names <- food_CAST_SARA_WAT_M_dge_sig_tbl_logcounts$gene
-food_CAST_SARA_WAT_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(food_CAST_SARA_WAT_M_dge_sig_tbl_logcounts) <- food_CAST_SARA_WAT_M_names
-food_CAST_SARA_HYP_M_names <- food_CAST_SARA_HYP_M_dge_sig_tbl_logcounts$gene
-food_CAST_SARA_HYP_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(food_CAST_SARA_HYP_M_dge_sig_tbl_logcounts) <- food_CAST_SARA_HYP_M_names
-food_CAST_SARA_LIV_M_names <- food_CAST_SARA_LIV_M_dge_sig_tbl_logcounts$gene
-food_CAST_SARA_LIV_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(food_CAST_SARA_LIV_M_dge_sig_tbl_logcounts) <- food_CAST_SARA_LIV_M_names
-food_CAST_MANF_BAT_M_names <- food_CAST_MANF_BAT_M_dge_sig_tbl_logcounts$gene
-food_CAST_MANF_BAT_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(food_CAST_MANF_BAT_M_dge_sig_tbl_logcounts) <- food_CAST_MANF_BAT_M_names
-food_CAST_MANF_WAT_M_names <- food_CAST_MANF_WAT_M_dge_sig_tbl_logcounts$gene
-food_CAST_MANF_WAT_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(food_CAST_MANF_WAT_M_dge_sig_tbl_logcounts) <- food_CAST_MANF_WAT_M_names
-food_CAST_MANF_HYP_M_names <- food_CAST_MANF_HYP_M_dge_sig_tbl_logcounts$gene
-food_CAST_MANF_HYP_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(food_CAST_MANF_HYP_M_dge_sig_tbl_logcounts) <- food_CAST_MANF_HYP_M_names
-food_CAST_MANF_LIV_M_names <- food_CAST_MANF_LIV_M_dge_sig_tbl_logcounts$gene
-food_CAST_MANF_LIV_M_dge_sig_tbl_logcounts$gene <- NULL
-rownames(food_CAST_MANF_LIV_M_dge_sig_tbl_logcounts) <- food_CAST_MANF_LIV_M_names
 
 # heatmap of results
+jpeg("SARA_MANF_dge_sig_tbl_logcounts.jpg")
+heatmap(as.matrix(SARA_MANF_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
+dev.off()
+jpeg("treatment_SARA_dge_sig_tbl_logcounts.jpg")
+heatmap(as.matrix(treatment_SARA_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
+dev.off()
+jpeg("treatment_MANF_dge_sig_tbl_logcounts.jpg")
+heatmap(as.matrix(treatment_MANF_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
+dev.off()
 # SARA
 jpeg("treatment_SARA_BAT_M_dge_sig_tbl_logcounts.jpg")
 heatmap(as.matrix(treatment_SARA_BAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
@@ -523,46 +466,78 @@ dev.off()
 jpeg("treatment_MANF_LIV_M_dge_sig_tbl_logcounts.jpg")
 heatmap(as.matrix(treatment_MANF_LIV_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
 dev.off()
-# CAST
-jpeg("treatment_CAST_BAT_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(treatment_CAST_BAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-jpeg("treatment_CAST_WAT_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(treatment_CAST_WAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-jpeg("treatment_CAST_HYP_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(treatment_CAST_HYP_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-jpeg("treatment_CAST_LIV_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(treatment_CAST_LIV_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-# evolved divergence
-jpeg("food_CAST_SARA_BAT_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(food_CAST_SARA_BAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-jpeg("food_CAST_SARA_WAT_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(food_CAST_SARA_WAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-jpeg("food_CAST_SARA_HYP_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(food_CAST_SARA_HYP_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-jpeg("food_CAST_SARA_LIV_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(food_CAST_SARA_LIV_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-jpeg("food_CAST_MANF_BAT_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(food_CAST_MANF_BAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-jpeg("food_CAST_MANF_WAT_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(food_CAST_MANF_WAT_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-jpeg("food_CAST_MANF_HYP_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(food_CAST_MANF_HYP_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
-jpeg("food_CAST_MANF_LIV_M_dge_sig_tbl_logcounts.jpg")
-heatmap(as.matrix(food_CAST_MANF_LIV_M_dge_sig_tbl_logcounts), margins = c(8, 1), labRow = FALSE)
-dev.off()
+
+# setup annotation names
+ann_groups <- data.frame(
+  tissue = as.factor(targets$tissue),
+  treatment = as.factor(targets$treatment),
+  mouseline = as.factor(targets$mouseline),
+  sex = as.factor(targets$sex),
+  row.names = colnames(countsTable))
+
+# setup annotation colors
+ann_colors <- list(
+  tissue = c(plotColors[1], plotColors[2], plotColors[5], plotColors[7]),
+  treatment = c(plotColors[3], plotColors[4]),
+  mouseline = c("black", "grey"),
+  sex = c(plotColors[11], plotColors[6])
+)
+
+# setup annotation color names
+names(ann_colors[["tissue"]]) <- unique(targets$tissue)
+names(ann_colors[["treatment"]]) <- unique(targets$treatment)
+names(ann_colors[["mouseline"]]) <- unique(targets$mouseline)
+names(ann_colors[["sex"]]) <- unique(targets$sex)
+
+# create heatmap for DGE
+SARA_MANF_vst_dge <- as.ggplot(
+  pheatmap(SARA_MANF_dge_sig_tbl_logcounts, 
+           scale="row", 
+           annotation_col = ann_groups, 
+           annotation_colors = ann_colors,
+           #main="Heatmap of DE Genes", 
+           show_rownames = FALSE,
+           show_colnames = FALSE,
+           fontsize = 12,
+           color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
+)
+# save the plot to a png file
+ggsave("SARA_MANF_vst_dge.png", plot = SARA_MANF_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
+
+# create heatmap for DGE
+treatment_MANF_vst_dge <- as.ggplot(
+  pheatmap(treatment_MANF_dge_sig_tbl_logcounts, 
+           scale="row", 
+           annotation_col = ann_groups, 
+           annotation_colors = ann_colors,
+           #main="Heatmap of DE Genes", 
+           show_rownames = FALSE,
+           show_colnames = FALSE,
+           fontsize = 12,
+           color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
+)
+# save the plot to a png file
+ggsave("treatment_MANF_vst_dge.png", plot = treatment_MANF_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
+
+# create heatmap for DGE
+treatment_SARA_vst_dge <- as.ggplot(
+  pheatmap(treatment_SARA_dge_sig_tbl_logcounts, 
+           scale="row", 
+           annotation_col = ann_groups, 
+           annotation_colors = ann_colors,
+           #main="Heatmap of DE Genes", 
+           show_rownames = FALSE,
+           show_colnames = FALSE,
+           fontsize = 12,
+           color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
+)
+# save the plot to a png file
+ggsave("treatment_SARA_vst_dge.png", plot = treatment_SARA_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
 
 # sort results by gene name
+SARA_MANF_dge_results_tbl <- SARA_MANF_dge_results_tbl[order(SARA_MANF_dge_results_tbl$gene), ]
+treatment_SARA_dge_results_tbl <- treatment_SARA_dge_results_tbl[order(treatment_SARA_dge_results_tbl$gene), ]
+treatment_MANF_dge_results_tbl <- treatment_MANF_dge_results_tbl[order(treatment_MANF_dge_results_tbl$gene), ]
 # SARA
 treatment_SARA_BAT_M_dge_results_tbl <- treatment_SARA_BAT_M_dge_results_tbl[order(treatment_SARA_BAT_M_dge_results_tbl$gene), ]
 treatment_SARA_WAT_M_dge_results_tbl <- treatment_SARA_WAT_M_dge_results_tbl[order(treatment_SARA_WAT_M_dge_results_tbl$gene), ]
@@ -573,20 +548,6 @@ treatment_MANF_BAT_M_dge_results_tbl <- treatment_MANF_BAT_M_dge_results_tbl[ord
 treatment_MANF_WAT_M_dge_results_tbl <- treatment_MANF_WAT_M_dge_results_tbl[order(treatment_MANF_WAT_M_dge_results_tbl$gene), ]
 treatment_MANF_HYP_M_dge_results_tbl <- treatment_MANF_HYP_M_dge_results_tbl[order(treatment_MANF_HYP_M_dge_results_tbl$gene), ]
 treatment_MANF_LIV_M_dge_results_tbl <- treatment_MANF_LIV_M_dge_results_tbl[order(treatment_MANF_LIV_M_dge_results_tbl$gene), ]
-# CAST
-treatment_CAST_BAT_M_dge_results_tbl <- treatment_CAST_BAT_M_dge_results_tbl[order(treatment_CAST_BAT_M_dge_results_tbl$gene), ]
-treatment_CAST_WAT_M_dge_results_tbl <- treatment_CAST_WAT_M_dge_results_tbl[order(treatment_CAST_WAT_M_dge_results_tbl$gene), ]
-treatment_CAST_HYP_M_dge_results_tbl <- treatment_CAST_HYP_M_dge_results_tbl[order(treatment_CAST_HYP_M_dge_results_tbl$gene), ]
-treatment_CAST_LIV_M_dge_results_tbl <- treatment_CAST_LIV_M_dge_results_tbl[order(treatment_CAST_LIV_M_dge_results_tbl$gene), ]
-# evolved divergence
-food_CAST_SARA_BAT_M_dge_results_tbl <- food_CAST_SARA_BAT_M_dge_results_tbl[order(food_CAST_SARA_BAT_M_dge_results_tbl$gene), ]
-food_CAST_SARA_WAT_M_dge_results_tbl <- food_CAST_SARA_WAT_M_dge_results_tbl[order(food_CAST_SARA_WAT_M_dge_results_tbl$gene), ]
-food_CAST_SARA_HYP_M_dge_results_tbl <- food_CAST_SARA_HYP_M_dge_results_tbl[order(food_CAST_SARA_HYP_M_dge_results_tbl$gene), ]
-food_CAST_SARA_LIV_M_dge_results_tbl <- food_CAST_SARA_LIV_M_dge_results_tbl[order(food_CAST_SARA_LIV_M_dge_results_tbl$gene), ]
-food_CAST_MANF_BAT_M_dge_results_tbl <- food_CAST_MANF_BAT_M_dge_results_tbl[order(food_CAST_MANF_BAT_M_dge_results_tbl$gene), ]
-food_CAST_MANF_WAT_M_dge_results_tbl <- food_CAST_MANF_WAT_M_dge_results_tbl[order(food_CAST_MANF_WAT_M_dge_results_tbl$gene), ]
-food_CAST_MANF_HYP_M_dge_results_tbl <- food_CAST_MANF_HYP_M_dge_results_tbl[order(food_CAST_MANF_HYP_M_dge_results_tbl$gene), ]
-food_CAST_MANF_LIV_M_dge_results_tbl <- food_CAST_MANF_LIV_M_dge_results_tbl[order(food_CAST_MANF_LIV_M_dge_results_tbl$gene), ]
 
 # store LFCs
 gene_IDs <- treatment_SARA_BAT_M_dge_results_tbl$gene
@@ -595,73 +556,33 @@ BAT_logFC <- data.frame(
   gene = gene_IDs,
   SARA_LFC = treatment_SARA_BAT_M_dge_results_tbl$logFC,
   MANF_LFC = treatment_MANF_BAT_M_dge_results_tbl$logFC,
-  CAST_LFC = treatment_CAST_BAT_M_dge_results_tbl$logFC,
-  CS_LFC = food_CAST_SARA_BAT_M_dge_results_tbl$logFC,
-  CM_LFC = food_CAST_MANF_BAT_M_dge_results_tbl$logFC,
   SARA_DE = init_DE,
   MANF_DE = init_DE,
-  CAST_DE = init_DE,
-  CAST_SARA_DE = init_DE,
-  CAST_MANF_DE = init_DE,
-  Response_SARA_MANF = init_DE,
-  Response_CAST_SARA = init_DE,
-  Response_CAST_MANF = init_DE,
-  Food_CAST_SARA = init_DE,
-  Food_CAST_MANF = init_DE
+  Response_SARA_MANF = init_DE
 )
 WAT_logFC <- data.frame(
   gene = gene_IDs,
   SARA_LFC = treatment_SARA_WAT_M_dge_results_tbl$logFC,
   MANF_LFC = treatment_MANF_WAT_M_dge_results_tbl$logFC,
-  CAST_LFC = treatment_CAST_WAT_M_dge_results_tbl$logFC,
-  CS_LFC = food_CAST_SARA_WAT_M_dge_results_tbl$logFC,
-  CM_LFC = food_CAST_MANF_WAT_M_dge_results_tbl$logFC,
   SARA_DE = init_DE,
   MANF_DE = init_DE,
-  CAST_DE = init_DE,
-  CAST_SARA_DE = init_DE,
-  CAST_MANF_DE = init_DE,
-  Response_SARA_MANF = init_DE,
-  Response_CAST_SARA = init_DE,
-  Response_CAST_MANF = init_DE,
-  Food_CAST_SARA = init_DE,
-  Food_CAST_MANF = init_DE
+  Response_SARA_MANF = init_DE
 )
 HYP_logFC <- data.frame(
   gene = gene_IDs,
   SARA_LFC = treatment_SARA_HYP_M_dge_results_tbl$logFC,
   MANF_LFC = treatment_MANF_HYP_M_dge_results_tbl$logFC,
-  CAST_LFC = treatment_CAST_HYP_M_dge_results_tbl$logFC,
-  CS_LFC = food_CAST_SARA_HYP_M_dge_results_tbl$logFC,
-  CM_LFC = food_CAST_MANF_HYP_M_dge_results_tbl$logFC,
   SARA_DE = init_DE,
   MANF_DE = init_DE,
-  CAST_DE = init_DE,
-  CAST_SARA_DE = init_DE,
-  CAST_MANF_DE = init_DE,
-  Response_SARA_MANF = init_DE,
-  Response_CAST_SARA = init_DE,
-  Response_CAST_MANF = init_DE,
-  Food_CAST_SARA = init_DE,
-  Food_CAST_MANF = init_DE
+  Response_SARA_MANF = init_DE
 )
 LIV_logFC <- data.frame(
   gene = gene_IDs,
   SARA_LFC = treatment_SARA_LIV_M_dge_results_tbl$logFC,
   MANF_LFC = treatment_MANF_LIV_M_dge_results_tbl$logFC,
-  CAST_LFC = treatment_CAST_LIV_M_dge_results_tbl$logFC,
-  CS_LFC = food_CAST_SARA_LIV_M_dge_results_tbl$logFC,
-  CM_LFC = food_CAST_MANF_LIV_M_dge_results_tbl$logFC,
   SARA_DE = init_DE,
   MANF_DE = init_DE,
-  CAST_DE = init_DE,
-  CAST_SARA_DE = init_DE,
-  CAST_MANF_DE = init_DE,
-  Response_SARA_MANF = init_DE,
-  Response_CAST_SARA = init_DE,
-  Response_CAST_MANF = init_DE,
-  Food_CAST_SARA = init_DE,
-  Food_CAST_MANF = init_DE
+  Response_SARA_MANF = init_DE
 )
 
 # indicate DE gene set
@@ -683,32 +604,6 @@ treatment_MANF_HYP_M_dge_sig_tbl.keep <- HYP_logFC$gene %in% treatment_MANF_HYP_
 HYP_logFC$MANF_DE[treatment_MANF_HYP_M_dge_sig_tbl.keep] <- "MANF"
 treatment_MANF_LIV_M_dge_sig_tbl.keep <- LIV_logFC$gene %in% treatment_MANF_LIV_M_dge_sig_tbl$gene
 LIV_logFC$MANF_DE[treatment_MANF_LIV_M_dge_sig_tbl.keep] <- "MANF"
-# CAST
-treatment_CAST_BAT_M_dge_sig_tbl.keep <- BAT_logFC$gene %in% treatment_CAST_BAT_M_dge_sig_tbl$gene
-BAT_logFC$CAST_DE[treatment_CAST_BAT_M_dge_sig_tbl.keep] <- "CAST"
-treatment_CAST_WAT_M_dge_sig_tbl.keep <- WAT_logFC$gene %in% treatment_CAST_WAT_M_dge_sig_tbl$gene
-WAT_logFC$CAST_DE[treatment_CAST_WAT_M_dge_sig_tbl.keep] <- "CAST"
-treatment_CAST_HYP_M_dge_sig_tbl.keep <- HYP_logFC$gene %in% treatment_CAST_HYP_M_dge_sig_tbl$gene
-HYP_logFC$CAST_DE[treatment_CAST_HYP_M_dge_sig_tbl.keep] <- "CAST"
-treatment_CAST_LIV_M_dge_sig_tbl.keep <- LIV_logFC$gene %in% treatment_CAST_LIV_M_dge_sig_tbl$gene
-LIV_logFC$CAST_DE[treatment_CAST_LIV_M_dge_sig_tbl.keep] <- "CAST"
-# evolved divergence
-food_CAST_SARA_BAT_M_dge_sig_tbl.keep <- BAT_logFC$gene %in% food_CAST_SARA_BAT_M_dge_sig_tbl$gene
-BAT_logFC$CAST_SARA_DE[food_CAST_SARA_BAT_M_dge_sig_tbl.keep] <- "CS"
-food_CAST_SARA_WAT_M_dge_sig_tbl.keep <- WAT_logFC$gene %in% food_CAST_SARA_WAT_M_dge_sig_tbl$gene
-WAT_logFC$CAST_SARA_DE[food_CAST_SARA_WAT_M_dge_sig_tbl.keep] <- "CS"
-food_CAST_SARA_HYP_M_dge_sig_tbl.keep <- HYP_logFC$gene %in% food_CAST_SARA_HYP_M_dge_sig_tbl$gene
-HYP_logFC$CAST_SARA_DE[food_CAST_SARA_HYP_M_dge_sig_tbl.keep] <- "CS"
-food_CAST_SARA_LIV_M_dge_sig_tbl.keep <- LIV_logFC$gene %in% food_CAST_SARA_LIV_M_dge_sig_tbl$gene
-LIV_logFC$CAST_SARA_DE[food_CAST_SARA_LIV_M_dge_sig_tbl.keep] <- "CS"
-food_CAST_MANF_BAT_M_dge_sig_tbl.keep <- BAT_logFC$gene %in% food_CAST_MANF_BAT_M_dge_sig_tbl$gene
-BAT_logFC$CAST_MANF_DE[food_CAST_MANF_BAT_M_dge_sig_tbl.keep] <- "CM"
-food_CAST_MANF_WAT_M_dge_sig_tbl.keep <- WAT_logFC$gene %in% food_CAST_MANF_WAT_M_dge_sig_tbl$gene
-WAT_logFC$CAST_MANF_DE[food_CAST_MANF_WAT_M_dge_sig_tbl.keep] <- "CM"
-food_CAST_MANF_HYP_M_dge_sig_tbl.keep <- HYP_logFC$gene %in% food_CAST_MANF_HYP_M_dge_sig_tbl$gene
-HYP_logFC$CAST_MANF_DE[food_CAST_MANF_HYP_M_dge_sig_tbl.keep] <- "CM"
-food_CAST_MANF_LIV_M_dge_sig_tbl.keep <- LIV_logFC$gene %in% food_CAST_MANF_LIV_M_dge_sig_tbl$gene
-LIV_logFC$CAST_MANF_DE[food_CAST_MANF_LIV_M_dge_sig_tbl.keep] <- "CM"
 
 # treatment
 # SARA_MANF
@@ -733,95 +628,6 @@ BAT_logFC$Response_SARA_MANF <- gsub("None_MANF", "MANF", BAT_logFC$Response_SAR
 WAT_logFC$Response_SARA_MANF <- gsub("None_MANF", "MANF", WAT_logFC$Response_SARA_MANF)
 HYP_logFC$Response_SARA_MANF <- gsub("None_MANF", "MANF", HYP_logFC$Response_SARA_MANF)
 LIV_logFC$Response_SARA_MANF <- gsub("None_MANF", "MANF", LIV_logFC$Response_SARA_MANF)
-# CAST_SARA
-BAT_logFC$Response_CAST_SARA <- paste(BAT_logFC$CAST_DE, BAT_logFC$SARA_DE, sep = "_")
-WAT_logFC$Response_CAST_SARA <- paste(WAT_logFC$CAST_DE, WAT_logFC$SARA_DE, sep = "_")
-HYP_logFC$Response_CAST_SARA <- paste(HYP_logFC$CAST_DE, HYP_logFC$SARA_DE, sep = "_")
-LIV_logFC$Response_CAST_SARA <- paste(LIV_logFC$CAST_DE, LIV_logFC$SARA_DE, sep = "_")
-BAT_logFC$Response_CAST_SARA <- gsub("CAST_SARA", "Both", BAT_logFC$Response_CAST_SARA)
-WAT_logFC$Response_CAST_SARA <- gsub("CAST_SARA", "Both", WAT_logFC$Response_CAST_SARA)
-HYP_logFC$Response_CAST_SARA <- gsub("CAST_SARA", "Both", HYP_logFC$Response_CAST_SARA)
-LIV_logFC$Response_CAST_SARA <- gsub("CAST_SARA", "Both", LIV_logFC$Response_CAST_SARA)
-# clean up
-BAT_logFC$Response_CAST_SARA <- gsub("None_None", "None", BAT_logFC$Response_CAST_SARA)
-WAT_logFC$Response_CAST_SARA <- gsub("None_None", "None", WAT_logFC$Response_CAST_SARA)
-HYP_logFC$Response_CAST_SARA <- gsub("None_None", "None", HYP_logFC$Response_CAST_SARA)
-LIV_logFC$Response_CAST_SARA <- gsub("None_None", "None", LIV_logFC$Response_CAST_SARA)
-BAT_logFC$Response_CAST_SARA <- gsub("CAST_None", "CAST", BAT_logFC$Response_CAST_SARA)
-WAT_logFC$Response_CAST_SARA <- gsub("CAST_None", "CAST", WAT_logFC$Response_CAST_SARA)
-HYP_logFC$Response_CAST_SARA <- gsub("CAST_None", "CAST", HYP_logFC$Response_CAST_SARA)
-LIV_logFC$Response_CAST_SARA <- gsub("CAST_None", "CAST", LIV_logFC$Response_CAST_SARA)
-BAT_logFC$Response_CAST_SARA <- gsub("None_SARA", "SARA", BAT_logFC$Response_CAST_SARA)
-WAT_logFC$Response_CAST_SARA <- gsub("None_SARA", "SARA", WAT_logFC$Response_CAST_SARA)
-HYP_logFC$Response_CAST_SARA <- gsub("None_SARA", "SARA", HYP_logFC$Response_CAST_SARA)
-LIV_logFC$Response_CAST_SARA <- gsub("None_SARA", "SARA", LIV_logFC$Response_CAST_SARA)
-# CAST_MANF
-BAT_logFC$Response_CAST_MANF <- paste(BAT_logFC$CAST_DE, BAT_logFC$MANF_DE, sep = "_")
-WAT_logFC$Response_CAST_MANF <- paste(WAT_logFC$CAST_DE, WAT_logFC$MANF_DE, sep = "_")
-HYP_logFC$Response_CAST_MANF <- paste(HYP_logFC$CAST_DE, HYP_logFC$MANF_DE, sep = "_")
-LIV_logFC$Response_CAST_MANF <- paste(LIV_logFC$CAST_DE, LIV_logFC$MANF_DE, sep = "_")
-BAT_logFC$Response_CAST_MANF <- gsub("CAST_MANF", "Both", BAT_logFC$Response_CAST_MANF)
-WAT_logFC$Response_CAST_MANF <- gsub("CAST_MANF", "Both", WAT_logFC$Response_CAST_MANF)
-HYP_logFC$Response_CAST_MANF <- gsub("CAST_MANF", "Both", HYP_logFC$Response_CAST_MANF)
-LIV_logFC$Response_CAST_MANF <- gsub("CAST_MANF", "Both", LIV_logFC$Response_CAST_MANF)
-# clean up
-BAT_logFC$Response_CAST_MANF <- gsub("None_None", "None", BAT_logFC$Response_CAST_MANF)
-WAT_logFC$Response_CAST_MANF <- gsub("None_None", "None", WAT_logFC$Response_CAST_MANF)
-HYP_logFC$Response_CAST_MANF <- gsub("None_None", "None", HYP_logFC$Response_CAST_MANF)
-LIV_logFC$Response_CAST_MANF <- gsub("None_None", "None", LIV_logFC$Response_CAST_MANF)
-BAT_logFC$Response_CAST_MANF <- gsub("CAST_None", "CAST", BAT_logFC$Response_CAST_MANF)
-WAT_logFC$Response_CAST_MANF <- gsub("CAST_None", "CAST", WAT_logFC$Response_CAST_MANF)
-HYP_logFC$Response_CAST_MANF <- gsub("CAST_None", "CAST", HYP_logFC$Response_CAST_MANF)
-LIV_logFC$Response_CAST_MANF <- gsub("CAST_None", "CAST", LIV_logFC$Response_CAST_MANF)
-BAT_logFC$Response_CAST_MANF <- gsub("None_MANF", "MANF", BAT_logFC$Response_CAST_MANF)
-WAT_logFC$Response_CAST_MANF <- gsub("None_MANF", "MANF", WAT_logFC$Response_CAST_MANF)
-HYP_logFC$Response_CAST_MANF <- gsub("None_MANF", "MANF", HYP_logFC$Response_CAST_MANF)
-LIV_logFC$Response_CAST_MANF <- gsub("None_MANF", "MANF", LIV_logFC$Response_CAST_MANF)
-# evolved divergence
-# food CAST vs SARA and CAST ad lib vs food
-BAT_logFC$Food_CAST_SARA <- paste(BAT_logFC$CAST_DE, BAT_logFC$CAST_SARA_DE, sep = "_")
-WAT_logFC$Food_CAST_SARA <- paste(WAT_logFC$CAST_DE, WAT_logFC$CAST_SARA_DE, sep = "_")
-HYP_logFC$Food_CAST_SARA <- paste(HYP_logFC$CAST_DE, HYP_logFC$CAST_SARA_DE, sep = "_")
-LIV_logFC$Food_CAST_SARA <- paste(LIV_logFC$CAST_DE, LIV_logFC$CAST_SARA_DE, sep = "_")
-BAT_logFC$Food_CAST_SARA <- gsub("CAST_CS", "Both", BAT_logFC$Food_CAST_SARA)
-WAT_logFC$Food_CAST_SARA <- gsub("CAST_CS", "Both", WAT_logFC$Food_CAST_SARA)
-HYP_logFC$Food_CAST_SARA <- gsub("CAST_CS", "Both", HYP_logFC$Food_CAST_SARA)
-LIV_logFC$Food_CAST_SARA <- gsub("CAST_CS", "Both", LIV_logFC$Food_CAST_SARA)
-# clean up
-BAT_logFC$Food_CAST_SARA <- gsub("None_None", "None", BAT_logFC$Food_CAST_SARA)
-WAT_logFC$Food_CAST_SARA <- gsub("None_None", "None", WAT_logFC$Food_CAST_SARA)
-HYP_logFC$Food_CAST_SARA <- gsub("None_None", "None", HYP_logFC$Food_CAST_SARA)
-LIV_logFC$Food_CAST_SARA <- gsub("None_None", "None", LIV_logFC$Food_CAST_SARA)
-BAT_logFC$Food_CAST_SARA <- gsub("CAST_None", "CAST", BAT_logFC$Food_CAST_SARA)
-WAT_logFC$Food_CAST_SARA <- gsub("CAST_None", "CAST", WAT_logFC$Food_CAST_SARA)
-HYP_logFC$Food_CAST_SARA <- gsub("CAST_None", "CAST", HYP_logFC$Food_CAST_SARA)
-LIV_logFC$Food_CAST_SARA <- gsub("CAST_None", "CAST", LIV_logFC$Food_CAST_SARA)
-BAT_logFC$Food_CAST_SARA <- gsub("None_CS", "CS", BAT_logFC$Food_CAST_SARA)
-WAT_logFC$Food_CAST_SARA <- gsub("None_CS", "CS", WAT_logFC$Food_CAST_SARA)
-HYP_logFC$Food_CAST_SARA <- gsub("None_CS", "CS", HYP_logFC$Food_CAST_SARA)
-LIV_logFC$Food_CAST_SARA <- gsub("None_CS", "CS", LIV_logFC$Food_CAST_SARA)
-# CAST_MANF
-BAT_logFC$Food_CAST_MANF <- paste(BAT_logFC$CAST_DE, BAT_logFC$CAST_MANF_DE, sep = "_")
-WAT_logFC$Food_CAST_MANF <- paste(WAT_logFC$CAST_DE, WAT_logFC$CAST_MANF_DE, sep = "_")
-HYP_logFC$Food_CAST_MANF <- paste(HYP_logFC$CAST_DE, HYP_logFC$CAST_MANF_DE, sep = "_")
-LIV_logFC$Food_CAST_MANF <- paste(LIV_logFC$CAST_DE, LIV_logFC$CAST_MANF_DE, sep = "_")
-BAT_logFC$Food_CAST_MANF <- gsub("CAST_CM", "Both", BAT_logFC$Food_CAST_MANF)
-WAT_logFC$Food_CAST_MANF <- gsub("CAST_CM", "Both", WAT_logFC$Food_CAST_MANF)
-HYP_logFC$Food_CAST_MANF <- gsub("CAST_CM", "Both", HYP_logFC$Food_CAST_MANF)
-LIV_logFC$Food_CAST_MANF <- gsub("CAST_CM", "Both", LIV_logFC$Food_CAST_MANF)
-# clean up
-BAT_logFC$Food_CAST_MANF <- gsub("None_None", "None", BAT_logFC$Food_CAST_MANF)
-WAT_logFC$Food_CAST_MANF <- gsub("None_None", "None", WAT_logFC$Food_CAST_MANF)
-HYP_logFC$Food_CAST_MANF <- gsub("None_None", "None", HYP_logFC$Food_CAST_MANF)
-LIV_logFC$Food_CAST_MANF <- gsub("None_None", "None", LIV_logFC$Food_CAST_MANF)
-BAT_logFC$Food_CAST_MANF <- gsub("CAST_None", "CAST", BAT_logFC$Food_CAST_MANF)
-WAT_logFC$Food_CAST_MANF <- gsub("CAST_None", "CAST", WAT_logFC$Food_CAST_MANF)
-HYP_logFC$Food_CAST_MANF <- gsub("CAST_None", "CAST", HYP_logFC$Food_CAST_MANF)
-LIV_logFC$Food_CAST_MANF <- gsub("CAST_None", "CAST", LIV_logFC$Food_CAST_MANF)
-BAT_logFC$Food_CAST_MANF <- gsub("None_CM", "CM", BAT_logFC$Food_CAST_MANF)
-WAT_logFC$Food_CAST_MANF <- gsub("None_CM", "CM", WAT_logFC$Food_CAST_MANF)
-HYP_logFC$Food_CAST_MANF <- gsub("None_CM", "CM", HYP_logFC$Food_CAST_MANF)
-LIV_logFC$Food_CAST_MANF <- gsub("None_CM", "CM", LIV_logFC$Food_CAST_MANF)
 
 # turn on scientific notation
 options(scipen = 0)
@@ -876,218 +682,5 @@ ggplot(LIV_logFC_sorted, aes(x = SARA_LFC, y = MANF_LFC, color = Response_SARA_M
   scale_alpha_manual(values = c("None" = 0.2, "SARA" = 0.75, "MANF" = 0.75, "Both" = 1.0)) + 
   scale_color_manual(values = c("None" = "#BEBEBE", "SARA" = plotColors[4], "MANF" = plotColors[6], "Both" = plotColors[5])) +
   labs(x = "SARA log2 FC", y = "MANF log2 FC") +
-  theme_minimal()
-dev.off()
-
-# CAST_SARA plots
-# order data frames
-custom_order <- c("None", "CAST", "SARA", "Both")
-BAT_logFC_sorted <- BAT_logFC %>%
-  arrange(match(Response_CAST_SARA, custom_order))
-WAT_logFC_sorted <- WAT_logFC %>%
-  arrange(match(Response_CAST_SARA, custom_order))
-HYP_logFC_sorted <- HYP_logFC %>%
-  arrange(match(Response_CAST_SARA, custom_order))
-LIV_logFC_sorted <- LIV_logFC %>%
-  arrange(match(Response_CAST_SARA, custom_order))
-# scatter plots of log2 FC with correlations
-jpeg("treatment_CAST_SARA_BAT_M_dge_LFC_cor.jpg")
-ggplot(BAT_logFC_sorted, aes(x = CAST_LFC, y = SARA_LFC, color = Response_CAST_SARA)) + 
-  geom_point(aes(alpha = Response_CAST_SARA)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CAST" = 0.75, "SARA" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CAST" = plotColors[4], "SARA" = plotColors[6])) +
-  labs(x = "CAST log2 FC", y = "SARA log2 FC") +
-  theme_minimal()
-dev.off()
-jpeg("treatment_CAST_SARA_WAT_M_dge_LFC_cor.jpg")
-ggplot(WAT_logFC_sorted, aes(x = CAST_LFC, y = SARA_LFC, color = Response_CAST_SARA)) + 
-  geom_point(aes(alpha = Response_CAST_SARA)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CAST" = 0.75, "SARA" = 0.75, "Both" = 1.0)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CAST" = plotColors[4], "SARA" = plotColors[6], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC", y = "SARA log2 FC") +
-  theme_minimal()
-dev.off()
-jpeg("treatment_CAST_SARA_HYP_M_dge_LFC_cor.jpg")
-ggplot(HYP_logFC_sorted, aes(x = CAST_LFC, y = SARA_LFC, color = Response_CAST_SARA)) + 
-  geom_point(aes(alpha = Response_CAST_SARA)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CAST" = 0.75, "SARA" = 0.75, "Both" = 1.0)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CAST" = plotColors[4], "SARA" = plotColors[6], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC", y = "SARA log2 FC") +
-  theme_minimal()
-dev.off()
-jpeg("treatment_CAST_SARA_LIV_M_dge_LFC_cor.jpg")
-ggplot(LIV_logFC_sorted, aes(x = CAST_LFC, y = SARA_LFC, color = Response_CAST_SARA)) + 
-  geom_point(aes(alpha = Response_CAST_SARA)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CAST" = 0.75, "SARA" = 0.75, "Both" = 1.0)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CAST" = plotColors[4], "SARA" = plotColors[6], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC", y = "SARA log2 FC") +
-  theme_minimal()
-dev.off()
-
-# CAST_MANF plots
-# order data frames
-custom_order <- c("None", "CAST", "MANF", "Both")
-BAT_logFC_sorted <- BAT_logFC %>%
-  arrange(match(Response_CAST_MANF, custom_order))
-WAT_logFC_sorted <- WAT_logFC %>%
-  arrange(match(Response_CAST_MANF, custom_order))
-HYP_logFC_sorted <- HYP_logFC %>%
-  arrange(match(Response_CAST_MANF, custom_order))
-LIV_logFC_sorted <- LIV_logFC %>%
-  arrange(match(Response_CAST_MANF, custom_order))
-# scatter plots of log2 FC with correlations
-jpeg("treatment_CAST_MANF_BAT_M_dge_LFC_cor.jpg")
-ggplot(BAT_logFC_sorted, aes(x = CAST_LFC, y = MANF_LFC, color = Response_CAST_MANF)) + 
-  geom_point(aes(alpha = Response_CAST_MANF)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CAST" = 0.75, "MANF" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CAST" = plotColors[4], "MANF" = plotColors[6])) +
-  labs(x = "CAST log2 FC", y = "MANF log2 FC") +
-  theme_minimal()
-dev.off()
-jpeg("treatment_CAST_MANF_WAT_M_dge_LFC_cor.jpg")
-ggplot(WAT_logFC_sorted, aes(x = CAST_LFC, y = MANF_LFC, color = Response_CAST_MANF)) + 
-  geom_point(aes(alpha = Response_CAST_MANF)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CAST" = 0.75, "MANF" = 0.75, "Both" = 1.0)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CAST" = plotColors[4], "MANF" = plotColors[6], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC", y = "MANF log2 FC") +
-  theme_minimal()
-dev.off()
-jpeg("treatment_CAST_MANF_HYP_M_dge_LFC_cor.jpg")
-ggplot(HYP_logFC_sorted, aes(x = CAST_LFC, y = MANF_LFC, color = Response_CAST_MANF)) + 
-  geom_point(aes(alpha = Response_CAST_MANF)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CAST" = 0.75, "MANF" = 0.75, "Both" = 1.0)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CAST" = plotColors[4], "MANF" = plotColors[6], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC", y = "MANF log2 FC") +
-  theme_minimal()
-dev.off()
-jpeg("treatment_CAST_MANF_LIV_M_dge_LFC_cor.jpg")
-ggplot(LIV_logFC_sorted, aes(x = CAST_LFC, y = MANF_LFC, color = Response_CAST_MANF)) + 
-  geom_point(aes(alpha = Response_CAST_MANF)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CAST" = 0.75, "MANF" = 0.75, "Both" = 1.0)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CAST" = plotColors[4], "MANF" = plotColors[6], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC", y = "MANF log2 FC") +
-  theme_minimal()
-dev.off()
-
-# food restricted male CAST vs SARA and CAST vs MANF 
-# compared to ad lib vs food restricted male CAST vs SARA and CAST vs MANF
-# CAST_SARA plots
-# order data frames
-custom_order <- c("None", "CS", "CAST", "Both")
-BAT_logFC_sorted <- BAT_logFC %>%
-  arrange(match(Food_CAST_SARA, custom_order))
-WAT_logFC_sorted <- WAT_logFC %>%
-  arrange(match(Food_CAST_SARA, custom_order))
-HYP_logFC_sorted <- HYP_logFC %>%
-  arrange(match(Food_CAST_SARA, custom_order))
-LIV_logFC_sorted <- LIV_logFC %>%
-  arrange(match(Food_CAST_SARA, custom_order))
-# scatter plots of log2 FC with correlations
-jpeg("food_CAST_CS_BAT_M_dge_LFC_cor.jpg")
-ggplot(BAT_logFC_sorted, aes(x = CAST_LFC, y = CS_LFC, color = Food_CAST_SARA)) + 
-  geom_point(aes(alpha = Food_CAST_SARA)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CS" = 0.75, "CAST" = 0.75, "Both" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CS" = plotColors[6], "CAST" = plotColors[4], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC Ad Lib vs Food Restricted", y = "CAST vs SARA log2 FC Food Restricted") +
-  theme_minimal()
-dev.off()
-jpeg("food_CAST_CS_WAT_M_dge_LFC_cor.jpg")
-ggplot(WAT_logFC_sorted, aes(x = CAST_LFC, y = CS_LFC, color = Food_CAST_SARA)) + 
-  geom_point(aes(alpha = Food_CAST_SARA)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CS" = 0.75, "CAST" = 0.75, "Both" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CS" = plotColors[6], "CAST" = plotColors[4], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC Ad Lib vs Food Restricted", y = "CAST vs SARA log2 FC Food Restricted") +
-  theme_minimal()
-dev.off()
-jpeg("food_CAST_CS_HYP_M_dge_LFC_cor.jpg")
-ggplot(HYP_logFC_sorted, aes(x = CAST_LFC, y = CS_LFC, color = Food_CAST_SARA)) + 
-  geom_point(aes(alpha = Food_CAST_SARA)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CS" = 0.75, "CAST" = 0.75, "Both" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CS" = plotColors[6], "CAST" = plotColors[4], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC Ad Lib vs Food Restricted", y = "CAST vs SARA log2 FC Food Restricted") +
-  theme_minimal()
-dev.off()
-jpeg("food_CAST_CS_LIV_M_dge_LFC_cor.jpg")
-ggplot(LIV_logFC_sorted, aes(x = CAST_LFC, y = CS_LFC, color = Food_CAST_SARA)) + 
-  geom_point(aes(alpha = Food_CAST_SARA)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CS" = 0.75, "CAST" = 0.75, "Both" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CS" = plotColors[6], "CAST" = plotColors[4], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC Ad Lib vs Food Restricted", y = "CAST vs SARA log2 FC Food Restricted") +
-  theme_minimal()
-dev.off()
-# CAST_MANF plots
-# order data frames
-custom_order <- c("None", "CM", "CAST", "Both")
-BAT_logFC_sorted <- BAT_logFC %>%
-  arrange(match(Food_CAST_MANF, custom_order))
-WAT_logFC_sorted <- WAT_logFC %>%
-  arrange(match(Food_CAST_MANF, custom_order))
-HYP_logFC_sorted <- HYP_logFC %>%
-  arrange(match(Food_CAST_MANF, custom_order))
-LIV_logFC_sorted <- LIV_logFC %>%
-  arrange(match(Food_CAST_MANF, custom_order))
-# scatter plots of log2 FC with correlations
-jpeg("food_CAST_CM_BAT_M_dge_LFC_cor.jpg")
-ggplot(BAT_logFC_sorted, aes(x = CAST_LFC, y = CM_LFC, color = Food_CAST_MANF)) + 
-  geom_point(aes(alpha = Food_CAST_MANF)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CM" = 0.75, "CAST" = 0.75, "Both" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CM" = plotColors[6], "CAST" = plotColors[4], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC Ad Lib vs Food Restricted", y = "CAST vs MANF log2 FC Food Restricted") +
-  theme_minimal()
-dev.off()
-jpeg("food_CAST_CM_WAT_M_dge_LFC_cor.jpg")
-ggplot(WAT_logFC_sorted, aes(x = CAST_LFC, y = CM_LFC, color = Food_CAST_MANF)) + 
-  geom_point(aes(alpha = Food_CAST_MANF)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CM" = 0.75, "CAST" = 0.75, "Both" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CM" = plotColors[6], "CAST" = plotColors[4], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC Ad Lib vs Food Restricted", y = "CAST vs MANF log2 FC Food Restricted") +
-  theme_minimal()
-dev.off()
-jpeg("food_CAST_CM_HYP_M_dge_LFC_cor.jpg")
-ggplot(HYP_logFC_sorted, aes(x = CAST_LFC, y = CM_LFC, color = Food_CAST_MANF)) + 
-  geom_point(aes(alpha = Food_CAST_MANF)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CM" = 0.75, "CAST" = 0.75, "Both" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CM" = plotColors[6], "CAST" = plotColors[4], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC Ad Lib vs Food Restricted", y = "CAST vs MANF log2 FC Food Restricted") +
-  theme_minimal()
-dev.off()
-jpeg("food_CAST_CM_LIV_M_dge_LFC_cor.jpg")
-ggplot(LIV_logFC_sorted, aes(x = CAST_LFC, y = CM_LFC, color = Food_CAST_MANF)) + 
-  geom_point(aes(alpha = Food_CAST_MANF)) +
-  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "CM" = 0.75, "CAST" = 0.75, "Both" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "CM" = plotColors[6], "CAST" = plotColors[4], "Both" = plotColors[5])) +
-  labs(x = "CAST log2 FC Ad Lib vs Food Restricted", y = "CAST vs MANF log2 FC Food Restricted") +
   theme_minimal()
 dev.off()

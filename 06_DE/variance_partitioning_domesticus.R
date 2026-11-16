@@ -13,7 +13,7 @@ library(variancePartition)
 library(BiocParallel)
 
 # set working directory
-workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DEAnalysis_14Sep2026/variance_partitioning_domesticus"
+workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DA_12Nov2026/variance_partitioning_domesticus"
 dir.create(workingDir)
 setwd(workingDir)
 
@@ -28,7 +28,8 @@ cutFDR <- 0.05
 
 # set LFC cut
 #cutFC <- 1.2
-cutLFC <- log2(1.2)
+#cutLFC <- log2(1.2)
+cutLFC <- 0
 
 # trim the data table to remove lines with counting statistics (htseq)
 removeList <- c("__no_feature", "__ambiguous", "__too_low_aQual", "__not_aligned", "__alignment_not_unique")
