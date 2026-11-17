@@ -15,6 +15,7 @@
 #Submitted batch job 33248651
 #Submitted batch job 33248703
 #Submitted batch job 33257896
+#Submitted batch job 33258835
 
 # Required modules for servers
 module load samtools

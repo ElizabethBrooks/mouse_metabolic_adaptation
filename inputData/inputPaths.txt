@@ -5,4 +5,5 @@ adapter: /scratch/mack/e959b751/data/adapters/TruSeq3-PE.fa
 ATACAdapter: /scratch/mack/e959b751/data/adapters/NexteraPE-PE_TruSeq3-PE.fa
 genomeReference: /kuhpc/scratch/mack/e959b751/data/genome/Mus_musculus.GRCm39.dna.toplevel.fa
 genomeFeatures: /kuhpc/scratch/mack/e959b751/data/genome/Mus_musculus.GRCm39.112.gtf
+blacklistRegions: /kuhpc/scratch/mack/e959b751/data/Blacklist_Regions.bed
 outputs: /kuhpc/scratch/mack/e959b751/projects/metabolic_adaptation
