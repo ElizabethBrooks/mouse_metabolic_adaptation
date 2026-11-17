@@ -10,11 +10,6 @@
 # paired end reads
 # usage: sbatch sorting_ATAC_samtools.sh
 #Submitted batch job 24317556
-#Submitted batch job 32495027
-#Submitted batch job 32497997
-#Submitted batch job 33248651
-#Submitted batch job 33248703
-#Submitted batch job 33257896
 #Submitted batch job 33258835
 
 # Required modules for servers

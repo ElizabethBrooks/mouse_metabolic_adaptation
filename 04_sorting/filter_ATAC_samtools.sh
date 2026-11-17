@@ -9,7 +9,7 @@
 # Script to perform filtering of blacklist regions
 # paired end reads
 # usage: sbatch filter_ATAC_samtools.sh
-#Submitted batch job 33262536
+#Submitted batch job 33262549
 
 # Required modules for servers
 module load bedtools
