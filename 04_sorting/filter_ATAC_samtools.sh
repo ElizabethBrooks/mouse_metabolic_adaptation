@@ -9,6 +9,7 @@
 # Script to perform filtering of blacklist regions
 # paired end reads
 # usage: sbatch filter_ATAC_samtools.sh
+#Submitted batch job 33262536
 
 # Required modules for servers
 module load bedtools
@@ -24,10 +25,10 @@ blacklistPath=$(grep "blacklistRegions:" ../"inputData/inputPaths.txt" | tr -d "
 outputsPath=$(grep "outputs:" ../"inputData/inputPaths.txt" | tr -d " " | sed "s/outputs://g")
 
 # setup the inputs path
-inputsPath="filterd_sorted_"$methodTag"_ATAC"
+inputsPath=$outputsPath"/filterd_sorted_"$methodTag"_ATAC"
 
 # create outputs directory
-outputFolder="filterd_sorted_"$methodTag"_ATAC"
+outputFolder=$inputsPath
 
 # move to outputs directory
 cd "$outputFolder"
@@ -40,8 +41,6 @@ samtools --version >> $inputOutFile
 
 # loop through all reads and sort sam/bam files for input to samtools
 for f1 in $inputsPath"/"*/; do
-	# name of aligned file
-	curAlignedSample="$f1"accepted_hits.bam
 	# trim file path from current folder name
 	curSampleNoPath=$(basename "$f1")
 	# create directory for current sample outputs
