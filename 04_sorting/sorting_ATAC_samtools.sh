@@ -14,6 +14,7 @@
 #Submitted batch job 32497997
 #Submitted batch job 33248651
 #Submitted batch job 33248703
+#Submitted batch job 33257896
 
 # Required modules for servers
 module load samtools
@@ -55,23 +56,23 @@ for f1 in $inputsPath"/"*/; do
 	# status message
 	echo "Sample $curSampleNoPath is being processed..."
 	# remove reads unmapped, mate unmapped, not primary alignment, reads failing platform, duplicates
-	samtools view -@ 8 -F 524 -f 2 -u "$curAlignedSample" -o "$outputFolder"/"$curSampleNoPath"/filtered.bam
+	samtools view -@ 8 -F 524 -f 2 -o "$outputFolder"/"$curSampleNoPath"/filtered.bam "$curAlignedSample"
 	samtools sort -@ 8 -n -o "$outputFolder"/"$curSampleNoPath"/sortedName.bam -T /tmp/"$curSampleNoPath".sortedName.bam "$outputFolder"/"$curSampleNoPath"/filtered.bam
 	# update paired-end flags for singletons, and remove orphan reads (pair was removed) and read pairs mapping to different chromosomes
 	samtools fixmate -@ 8 -m -r "$outputFolder"/"$curSampleNoPath"/sortedName.bam "$outputFolder"/"$curSampleNoPath"/sortedFixed.bam
 	# remove mitochondiral sequences and obtain position sorted BAM
-	samtools view -@ 8 -F 1804 -f 2 -u "$outputFolder"/"$curSampleNoPath"/sortedFixed.bam | grep -v -E '\tMT\t' > "$outputFolder"/"$curSampleNoPath"/cleaned.bam 
-	samtools sort -@ 8 -o "$outputFolder"/"$curSampleNoPath"/accepted_hits.bam -T /tmp/"$curSampleNoPath".sorted.bam "$outputFolder"/"$curSampleNoPath"/cleaned.bam
+	samtools view -@ 8 -F 1804 -f 2 -e 'rname != "MT"' -o "$outputFolder"/"$curSampleNoPath"/cleaned.bam "$outputFolder"/"$curSampleNoPath"/sortedFixed.bam
+	samtools sort -@ 8 -o "$outputFolder"/"$curSampleNoPath"/acceptedHits.bam -T /tmp/"$curSampleNoPath".sorted.bam "$outputFolder"/"$curSampleNoPath"/cleaned.bam
 	# clean up
 	#rm "$outputFolder"/"$curSampleNoPath"/filtered.bam
 	#rm "$outputFolder"/"$curSampleNoPath"/cleaned.bam
 	#rm "$outputFolder"/"$curSampleNoPath"/sortedName.bam
 	#rm "$outputFolder"/"$curSampleNoPath"/sortedFixed.bam
 	# remove duplicate reads
-	samtools markdup -@ 8 -r "$outputFolder"/"$curSampleNoPath"/accepted_hits.bam "$outputFolder"/"$curSampleNoPath"/markedDups.bam
+	samtools markdup -@ 8 -r "$outputFolder"/"$curSampleNoPath"/acceptedHits.bam "$outputFolder"/"$curSampleNoPath"/noDups.bam
 	# index bam files
-	samtools index -@ 8 "$outputFolder"/"$curSampleNoPath"/accepted_hits.bam
-	samtools index -@ 8 "$outputFolder"/"$curSampleNoPath"/markedDups.bam
+	samtools index -@ 8 "$outputFolder"/"$curSampleNoPath"/acceptedHits.bam
+	samtools index -@ 8 "$outputFolder"/"$curSampleNoPath"/noDups.bam
 	# status message
 	echo "Sample $curSampleNoPath has been processed!"
 done
