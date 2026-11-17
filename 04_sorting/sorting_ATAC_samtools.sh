@@ -64,10 +64,10 @@ for f1 in $inputsPath"/"*/; do
 	samtools view -@ 8 -F 1804 -f 2 -e 'rname != "MT"' -o "$outputFolder"/"$curSampleNoPath"/cleaned.bam "$outputFolder"/"$curSampleNoPath"/sortedFixed.bam
 	samtools sort -@ 8 -o "$outputFolder"/"$curSampleNoPath"/acceptedHits.bam -T /tmp/"$curSampleNoPath".sorted.bam "$outputFolder"/"$curSampleNoPath"/cleaned.bam
 	# clean up
-	#rm "$outputFolder"/"$curSampleNoPath"/filtered.bam
-	#rm "$outputFolder"/"$curSampleNoPath"/cleaned.bam
-	#rm "$outputFolder"/"$curSampleNoPath"/sortedName.bam
-	#rm "$outputFolder"/"$curSampleNoPath"/sortedFixed.bam
+	rm "$outputFolder"/"$curSampleNoPath"/filtered.bam
+	rm "$outputFolder"/"$curSampleNoPath"/cleaned.bam
+	rm "$outputFolder"/"$curSampleNoPath"/sortedName.bam
+	rm "$outputFolder"/"$curSampleNoPath"/sortedFixed.bam
 	# remove duplicate reads
 	samtools markdup -@ 8 -r "$outputFolder"/"$curSampleNoPath"/acceptedHits.bam "$outputFolder"/"$curSampleNoPath"/noDups.bam
 	# index bam files
