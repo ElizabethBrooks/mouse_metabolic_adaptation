@@ -12,6 +12,7 @@
 #Submitted batch job 23686947
 # Usage Ex: sbatch fastqc_ATAC.sh trimmed
 #Submitted batch job 23722663
+#Submitted batch job 
 
 # Required modules for servers
 module load fastqc
@@ -55,7 +56,7 @@ fastqc -version > $versionFile
 fastqc $readPath"/"*".f"*"q.gz" -o $qcOut
 
 # run multiqc
-multiqc $qcOut -o $qcOut -n "multiqc"
+multiqc $qcOut"/"*"_001."*".gz" -o $qcOut -n "multiqc_paired"
 
 # Print status message
 echo "Analysis complete!"

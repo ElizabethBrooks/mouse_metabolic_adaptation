@@ -16,12 +16,12 @@ library(ATACseqQC)
 args <- commandArgs(trailingOnly = TRUE)
 
 # set working directory
-workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/ATAC_analysis_21Oct2026/evaluation"
+workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/ATAC_analysis_17Nov2026/evaluation"
 dir.create(workingDir)
 setwd(workingDir)
 
 # path to the input BAM file
-#bam_file <- "/Users/bamflappy/MackLab/metabolic_adaptation/sorted_coordinate_ATAC/25164FL-06-01-01_S347/accepted_hits.bam"
+#bam_file <- "/Users/bamflappy/MackLab/metabolic_adaptation/filterd_sorted_coordinate_ATAC/25164FL-06-01-01_S347/sorted.bam"
 bam_file <- args[1]
 
 # set the sample label
@@ -35,3 +35,4 @@ sample_label <- args[2]
 jpeg(paste("fragSizeDist", paste(sample_label, "jpg", sep="."), sep="_"))
 fragSize <- fragSizeDist(bam_file, sample_label)
 dev.off()
+

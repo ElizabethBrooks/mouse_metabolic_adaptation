@@ -9,7 +9,7 @@
 # Script to perform filtering of blacklist regions
 # paired end reads
 # usage: sbatch filter_ATAC_samtools.sh
-#Submitted batch job 33262643
+#Submitted batch job 33262651
 
 # Required modules for servers
 module load bedtools
@@ -43,14 +43,14 @@ samtools --version >> $inputOutFile
 for f1 in $inputsPath"/"*/; do
 	# trim file path from current folder name
 	curSampleNoPath=$(basename "$f1")
-	# create directory for current sample outputs
-	mkdir "$outputFolder"/"$curSampleNoPath"
 	# status message
 	echo "Sample $curSampleNoPath is being processed..."
 	# remove blacklist regions
 	bedtools intersect -abam "$outputFolder"/"$curSampleNoPath"/noDups.bam -b $blacklistPath -v > "$outputFolder"/"$curSampleNoPath"/noBlacklist.bam
 	samtools sort -@ 8 -o "$outputFolder"/"$curSampleNoPath"/sorted.bam -T /tmp/"$curSampleNoPath".sorted.bam "$outputFolder"/"$curSampleNoPath"/noBlacklist.bam
 	samtools index -@ 8 "$outputFolder"/"$curSampleNoPath"/sorted.bam
+	# clean up
+	rm "$outputFolder"/"$curSampleNoPath"/noBlacklist.bam
 	# status message
 	echo "Sample $curSampleNoPath has been processed!"
 done
