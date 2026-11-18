@@ -12,7 +12,7 @@
 #Submitted batch job 23686947
 # Usage Ex: sbatch fastqc_ATAC.sh trimmed
 #Submitted batch job 23722663
-#Submitted batch job 
+#Submitted batch job 33265748
 
 # Required modules for servers
 module load fastqc
@@ -37,12 +37,12 @@ elif [[ $inputsType == "raw" ]]; then
 fi
 
 # Make a new directory for analysis
-#mkdir $qcOut
+mkdir $qcOut
 # Check if the folder already exists
-#if [ $? -ne 0 ]; then
-#	echo "The $qcOut directory already exsists... please remove before proceeding."
-#	exit 1
-#fi
+if [ $? -ne 0 ]; then
+	echo "The $qcOut directory already exsists... please remove before proceeding."
+	exit 1
+fi
 # Move to the new directory
 cd $qcOut
 

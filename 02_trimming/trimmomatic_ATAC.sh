@@ -9,6 +9,7 @@
 # Script to perform trimmomatic trimming of ATAC paired end reads
 # Usage: sbatch trimmomatic_ATAC.sh
 #Submitted batch job 23687915
+#Submitted batch job 
 
 # Required modules for servers
 module load trimmomatic
@@ -21,7 +22,7 @@ adapterPath=$(grep "ATACAdapter:" ../"inputData/inputPaths.txt" | tr -d " " | se
 outputsPath=$(grep "outputs:" ../"inputData/inputPaths.txt" | tr -d " " | sed "s/outputs://g")
 
 # Make a new directory for analysis
-outputsPath=$outputsPath"/trimmed_ATAC"
+outputsPath=$outputsPath"/trimmed_ATAC_minlen5"
 mkdir $outputsPath
 # Check if the folder already exists
 if [ $? -ne 0 ]; then
@@ -51,7 +52,8 @@ for f1 in "$readPath"/*_R1_001.fastq.gz; do
 	# phred score for trimming (Illumina 1.9)
 	score=33
 	# Perform adapter trimming on paired reads using 8 threads
-	trimmomatic PE -threads 8 -phred"$score" $f1 $f2 $sampleTag".R1_001.fq.gz" $sampleTag"_uForward.fq.gz" $sampleTag".R2_001.fq.gz" $sampleTag"_uReverse.fq.gz" ILLUMINACLIP:"$adapterPath":2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:38
+	#trimmomatic PE -threads 8 -phred"$score" $f1 $f2 $sampleTag".R1_001.fq.gz" $sampleTag"_uForward.fq.gz" $sampleTag".R2_001.fq.gz" $sampleTag"_uReverse.fq.gz" ILLUMINACLIP:"$adapterPath":2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:38
+	trimmomatic PE -threads 8 -phred"$score" $f1 $f2 $sampleTag".R1_001.fq.gz" $sampleTag"_uForward.fq.gz" $sampleTag".R2_001.fq.gz" $sampleTag"_uReverse.fq.gz" ILLUMINACLIP:"$adapterPath":2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:5
 	# Print status message
 	echo "Processed!"
 done
