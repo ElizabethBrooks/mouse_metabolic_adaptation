@@ -37,12 +37,12 @@ elif [[ $inputsType == "raw" ]]; then
 fi
 
 # Make a new directory for analysis
-mkdir $qcOut
+#mkdir $qcOut
 # Check if the folder already exists
-if [ $? -ne 0 ]; then
-	echo "The $qcOut directory already exsists... please remove before proceeding."
-	exit 1
-fi
+#if [ $? -ne 0 ]; then
+#	echo "The $qcOut directory already exsists... please remove before proceeding."
+#	exit 1
+#fi
 # Move to the new directory
 cd $qcOut
 
