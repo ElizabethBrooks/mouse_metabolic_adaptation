@@ -26,7 +26,7 @@ plotColorSubset <- c(plotColors[4], plotColors[5], plotColors[6])
 scales::show_col(plotColors)
 
 # set working directory
-workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DA_12Nov2026/LIV_domesticus_LFC0"
+workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DA_12Nov2026/LIV_domesticus_LFC0_test"
 dir.create(workingDir)
 setwd(workingDir)
 
@@ -435,5 +435,7 @@ ggplot(DGE_log2FoldChange_sorted, aes(x = SARA_LFC, y = MANF_LFC, color = Respon
   #scale_color_manual(values = c("None" = "#BEBEBE", "SARA" = plotColors[4], "MANF" = plotColors[6], "Both" = plotColors[7])) +
   scale_color_manual(values = c("None" = "#BEBEBE", "MANF" = plotColors[6], "Both" = plotColors[7])) +
   labs(x = "SARA log2 FC", y = "MANF log2 FC") +
-  theme_minimal()
+  theme_minimal() #+
+  #ylim(-5, 5) +
+  #xlim(-5, 5)
 dev.off()

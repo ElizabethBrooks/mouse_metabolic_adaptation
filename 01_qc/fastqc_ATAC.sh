@@ -13,6 +13,7 @@
 # Usage Ex: sbatch fastqc_ATAC.sh trimmed
 #Submitted batch job 23722663
 #Submitted batch job 33265748
+#Submitted batch job 
 
 # Required modules for servers
 module load fastqc
@@ -28,9 +29,9 @@ outputsPath=$(grep "outputs:" ../"inputData/inputPaths.txt" | tr -d " " | sed "s
 # check inputs type
 if [[ $inputsType == "trimmed" ]]; then
 	# set the directory for inputs
-	readPath=$outputsPath"/trimmed_ATAC"
+	readPath=$outputsPath"/trimmed_ATAC_minlen5"
 	# set the directory for analysis
-	qcOut=$outputsPath"/qc_trimmed_ATAC"
+	qcOut=$outputsPath"/qc_trimmed_ATAC_minlen5"
 elif [[ $inputsType == "raw" ]]; then
 	# set the directory for analysis
 	qcOut=$outputsPath"/qc_raw_ATAC"
