@@ -18,15 +18,12 @@ library(ggplotify)
 library(ggpubr)
 library(RColorBrewer)
 
-# plotting Palettes
-# https://stackoverflow.com/questions/57153428/r-plot-color-combinations-that-are-colorblind-accessible
-# https://github.com/Nowosad/rcartocolor
-plotColors <- carto_pal(12, "Safe")
-plotColorSubset <- c(plotColors[4], plotColors[5], plotColors[6])
-scales::show_col(plotColors)
+##
+# Inputs & Data Prep
+##
 
-# set working directory
-workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DA_12Nov2026/BAT_domesticus_LFC0"
+# set working directory for outputs
+workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DE_19Nov2026/WAT_domesticus_LFC0"
 dir.create(workingDir)
 setwd(workingDir)
 
@@ -44,7 +41,7 @@ cutFDR <- 0.05
 cutLFC <- 0
 
 # subset to tissue specific data
-factors <- factors[factors$tissue == "BAT",]
+factors <- factors[factors$tissue == "WAT",]
 keep_cols <- rownames(factors)
 inputTable <- inputTable %>% select(all_of(keep_cols))
 
@@ -58,8 +55,8 @@ countsTable <- select(all_of(countsTable), -c(remove))
 factors <- factors[!grepl("CAST", factors$mouseline),]
 
 # verify that the order of the samples in the counts and groupings files match
-colnames(countsTable)
-rownames(factors)
+#colnames(countsTable)
+#rownames(factors)
 
 # convert the grouping data into factors 
 factors$individual <- factor(factors$individual)
@@ -74,9 +71,9 @@ dds <- DESeqDataSetFromMatrix(countData = countsTable,
                               design = ~ treatment + mouseline + sex + treatment:mouseline + sex:mouseline)
 
 # inspect the list object
-dds
+#dds
 
-# specify the reference level
+# specify the reference levels
 dds$treatment <- relevel(dds$treatment, ref = "Ad_lib")
 dds$mouseline <- relevel(dds$mouseline, ref = "MANF")
 dds$sex <- relevel(dds$sex, ref = "Male")
@@ -84,6 +81,13 @@ dds$sex <- relevel(dds$sex, ref = "Male")
 ##
 # Pre-Filtering
 ##
+
+# plotting Palettes
+# https://stackoverflow.com/questions/57153428/r-plot-color-combinations-that-are-colorblind-accessible
+# https://github.com/Nowosad/rcartocolor
+plotColors <- carto_pal(12, "Safe")
+plotColorSubset <- c(plotColors[4], plotColors[5], plotColors[6])
+scales::show_col(plotColors)
 
 # there are at least 1 samples per individual
 smallestGroupSize <- 1
@@ -431,9 +435,9 @@ ggplot(DGE_log2FoldChange_sorted, aes(x = SARA_LFC, y = MANF_LFC, color = Respon
   geom_smooth(method = "lm", color = "darkred", se = TRUE) +
   stat_cor(method = "pearson") +
   #scale_alpha_manual(values = c("None" = 0.2, "SARA" = 0.75, "MANF" = 0.75, "Both" = 0.75)) + 
-  scale_alpha_manual(values = c("None" = 0.2, "MANF" = 0.75, "Both" = 0.75)) + 
+  scale_alpha_manual(values = c("None" = 0.2, "SARA" = 0.75, "Both" = 0.75)) + 
   #scale_color_manual(values = c("None" = "#BEBEBE", "SARA" = plotColors[4], "MANF" = plotColors[6], "Both" = plotColors[7])) +
-  scale_color_manual(values = c("None" = "#BEBEBE", "MANF" = plotColors[6], "Both" = plotColors[7])) +
+  scale_color_manual(values = c("None" = "#BEBEBE", "SARA" = plotColors[6], "Both" = plotColors[7])) +
   labs(x = "SARA log2 FC", y = "MANF log2 FC") +
   theme_minimal()
 dev.off()

@@ -18,17 +18,12 @@ library(ggplotify)
 library(ggpubr)
 library(RColorBrewer)
 
-# plotting Palettes
-# https://stackoverflow.com/questions/57153428/r-plot-color-combinations-that-are-colorblind-accessible
-# https://github.com/Nowosad/rcartocolor
-plotColors <- carto_pal(12, "Safe")
-plotColorSubset <- c(plotColors[4], plotColors[5], plotColors[6])
-scales::show_col(plotColors)
+##
+# Inputs & Data Prep
+##
 
-# set working directory
-workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DA_12Nov2026/LIV_domesticus_LFC0_test"
-dir.create(workingDir)
-setwd(workingDir)
+# specify tissue
+tissueType <- "LIV"
 
 # import gene count data
 inputTable <- read.csv(file="/Users/bamflappy/MackLab/metabolic_adaptation/counted/counts_merged_samples.csv", row.names="gene")
@@ -40,8 +35,15 @@ factors <- read.csv(file="/Users/bamflappy/MackLab/input_data/experimental_desig
 cutFDR <- 0.05
 
 # set LFC cut
-#cutLFC <- log2(1.2)
 cutLFC <- 0
+
+# path for outputs
+outPath <- "/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DE_19Nov2026"
+
+# set working directory for outputs
+workingDir <- paste(outPath, tissueType, sep = "/")
+dir.create(workingDir)
+setwd(workingDir)
 
 # subset to tissue specific data
 factors <- factors[factors$tissue == "LIV",]
@@ -58,8 +60,8 @@ countsTable <- select(all_of(countsTable), -c(remove))
 factors <- factors[!grepl("CAST", factors$mouseline),]
 
 # verify that the order of the samples in the counts and groupings files match
-colnames(countsTable)
-rownames(factors)
+#colnames(countsTable)
+#rownames(factors)
 
 # convert the grouping data into factors 
 factors$individual <- factor(factors$individual)
@@ -74,9 +76,9 @@ dds <- DESeqDataSetFromMatrix(countData = countsTable,
                               design = ~ treatment + mouseline + sex + treatment:mouseline + sex:mouseline)
 
 # inspect the list object
-dds
+#dds
 
-# specify the reference level
+# specify the reference levels
 dds$treatment <- relevel(dds$treatment, ref = "Ad_lib")
 dds$mouseline <- relevel(dds$mouseline, ref = "MANF")
 dds$sex <- relevel(dds$sex, ref = "Male")
@@ -84,6 +86,13 @@ dds$sex <- relevel(dds$sex, ref = "Male")
 ##
 # Pre-Filtering
 ##
+
+# plotting Palettes
+# https://stackoverflow.com/questions/57153428/r-plot-color-combinations-that-are-colorblind-accessible
+# https://github.com/Nowosad/rcartocolor
+plotColors <- carto_pal(12, "Safe")
+plotColorSubset <- c(plotColors[4], plotColors[5], plotColors[6])
+scales::show_col(plotColors)
 
 # there are at least 1 samples per individual
 smallestGroupSize <- 1

@@ -18,33 +18,50 @@ library(ggplotify)
 library(ggpubr)
 library(RColorBrewer)
 
-# plotting Palettes
-# https://stackoverflow.com/questions/57153428/r-plot-color-combinations-that-are-colorblind-accessible
-# https://github.com/Nowosad/rcartocolor
-plotColors <- carto_pal(12, "Safe")
-plotColorSubset <- c(plotColors[4], plotColors[5], plotColors[6])
-scales::show_col(plotColors)
+##
+# Inputs
+##
 
-# set working directory
-workingDir="/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DA_12Nov2026/HYP_domesticus_LFC0"
-dir.create(workingDir)
-setwd(workingDir)
+# specify tissue
+tissueType <- "LIV"
+#tissueType <- "HYP"
+#tissueType <- "BAT"
+#tissueType <- "WAT"
 
-# import gene count data
-inputTable <- read.csv(file="/Users/bamflappy/MackLab/metabolic_adaptation/counted/counts_merged_samples.csv", row.names="gene")
+# count data path
+countsPath <- "/Users/bamflappy/MackLab/metabolic_adaptation/counted/counts_merged_samples.csv"
 
-# import grouping factor
-factors <- read.csv(file="/Users/bamflappy/MackLab/input_data/experimental_design.csv", row.names="sample")
+# experimental design path
+designPath <- "/Users/bamflappy/MackLab/input_data/experimental_design.csv"
 
 # set input FDR cutoff
 cutFDR <- 0.05
 
-# set LFC cut
-#cutLFC <- log2(1.2)
-cutLFC <- 0
+# set LFC cutoff
+#cutLFC <- 0
+cutLFC <- 1.2
+
+# path for outputs
+outPath <- "/Users/bamflappy/MackLab/metabolic_adaptation/Biostatistics/DE_19Nov2026"
+
+##
+# Data Prep
+##
+
+# set working directory for outputs
+outDir <- paste0(tissueType, "_FDR", cutFDR, "_LFC", cutLFC)
+workingDir <- paste(outPath, outDir, sep = "/")
+dir.create(workingDir)
+setwd(workingDir)
+
+# import gene count data
+inputTable <- read.csv(file=countsPath, row.names="gene")
+
+# import grouping factor
+factors <- read.csv(file=designPath, row.names="sample")
 
 # subset to tissue specific data
-factors <- factors[factors$tissue == "HYP",]
+factors <- factors[factors$tissue == tissueType,]
 keep_cols <- rownames(factors)
 inputTable <- inputTable %>% select(all_of(keep_cols))
 
@@ -57,36 +74,51 @@ remove <- rownames(factors[grepl("CAST", factors$mouseline),])
 countsTable <- select(all_of(countsTable), -c(remove))
 factors <- factors[!grepl("CAST", factors$mouseline),]
 
+# remove female samples
+remove <- rownames(factors[grepl("Female", factors$sex),])
+countsTable <- select(all_of(countsTable), -c(remove))
+factors <- factors[!grepl("Female", factors$sex),]
+
 # verify that the order of the samples in the counts and groupings files match
-colnames(countsTable)
-rownames(factors)
+#colnames(countsTable)
+#rownames(factors)
 
 # convert the grouping data into factors 
-factors$individual <- factor(factors$individual)
 factors$mouseline <- factor(factors$mouseline)
-factors$sex <- factor(factors$sex)
 factors$treatment <- factor(factors$treatment)
-factors$tissue <- factor(factors$tissue)
 
 # create DESeqDataSet list object
 dds <- DESeqDataSetFromMatrix(countData = countsTable,
                               colData = factors,
-                              design = ~ treatment + mouseline + sex + treatment:mouseline + sex:mouseline)
+                              design = ~ treatment + mouseline + treatment:mouseline)
 
 # inspect the list object
-dds
+#dds
 
-# specify the reference level
+# specify the reference levels
 dds$treatment <- relevel(dds$treatment, ref = "Ad_lib")
 dds$mouseline <- relevel(dds$mouseline, ref = "MANF")
-dds$sex <- relevel(dds$sex, ref = "Male")
 
 ##
 # Pre-Filtering
 ##
 
-# there are at least 1 samples per individual
-smallestGroupSize <- 1
+# plotting Palettes
+# https://stackoverflow.com/questions/57153428/r-plot-color-combinations-that-are-colorblind-accessible
+# https://github.com/Nowosad/rcartocolor
+plotColors <- carto_pal(12, "Safe")
+plotColorSubset <- c(plotColors[4], plotColors[5], plotColors[6])
+#scales::show_col(plotColors)
+
+# determine group sizes
+groupSizes <- c(sum(factors$treatment == "Ad_lib" & factors$mouseline == "SARA"), 
+                sum(factors$treatment == "Ad_lib" & factors$mouseline == "MANF"),
+                sum(factors$treatment == "Food_Restriction" & factors$mouseline == "SARA"), 
+                sum(factors$treatment == "Food_Restriction" & factors$mouseline == "MANF")
+)
+
+# get the smallest group size
+smallestGroupSize <- min(groupSizes)
 
 # keep only rows that have a count of at least 10 for a minimal number of samples
 keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
@@ -104,14 +136,11 @@ nrow(dds)
 # vst the data
 vsd <- vst(dds, blind=FALSE)
 
-# visualize the overall effect of the experimental conditions or any batch effects
-plotPCA(vsd, intgroup=c("treatment", "mouseline"))
-
-# save the PCA
+# save the PCA with PC1 and PC2
 pcaData <- plotPCA(vsd, intgroup=c("treatment", "mouseline"), returnData=FALSE)
 
-# customize the PCA
-ggplot(pcaData@data, aes(PC1, PC2, color=sex, shape=mouseline, fill=treatment)) +
+# store the PCA plot with PC1 and PC2
+sample_pca <- ggplot(pcaData@data, aes(PC1, PC2, shape=mouseline, fill=treatment)) +
   geom_point(size=3, stroke=1.25) +
   xlab(pcaData@labels$x) +
   ylab(pcaData@labels$y) + 
@@ -123,8 +152,14 @@ ggplot(pcaData@data, aes(PC1, PC2, color=sex, shape=mouseline, fill=treatment)) 
   guides(fill=guide_legend(override.aes=list(shape=21,fill=c(plotColors[1], plotColors[2]),color=c("white","white")))) +
   theme_minimal()
 
-# store the PCA plot
-sample_pca <- ggplot(pcaData@data, aes(PC1, PC2, color=sex, shape=mouseline, fill=treatment)) +
+# save the PCA plot with PC1 and PC2
+ggsave("sample_pca_PC1_PC2.png", plot = sample_pca, device = "png")
+
+# save the PCA with PC3 and PC4
+pcaData <- plotPCA(vsd, intgroup=c("treatment", "mouseline"), returnData=FALSE, pcsToUse=c(3, 4))
+
+# store the PCA plot with PC3 and PC4
+sample_pca <- ggplot(pcaData@data, aes(PC3, PC4, shape=mouseline, fill=treatment)) +
   geom_point(size=3, stroke=1.25) +
   xlab(pcaData@labels$x) +
   ylab(pcaData@labels$y) + 
@@ -137,7 +172,7 @@ sample_pca <- ggplot(pcaData@data, aes(PC1, PC2, color=sex, shape=mouseline, fil
   theme_minimal()
 
 # save the PCA plot
-ggsave("sample_pca.png", plot = sample_pca, device = "png")
+ggsave("sample_pca_PC3_PC4.png", plot = sample_pca, device = "png")
 
 # transpose of the transformed count matrix to get sample-to-sample distances
 sampleDists <- dist(t(assay(vsd)))
@@ -150,12 +185,6 @@ colnames(sampleDistMatrix) <- NULL
 
 # create a list of continuous colors
 colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
-
-# view the similarities and dissimilarities between samples
-pheatmap(sampleDistMatrix,
-         clustering_distance_rows=sampleDists,
-         clustering_distance_cols=sampleDists,
-         col=colors)
 
 # store the clustering plot as a ggplot object
 sample_clust <- as.ggplot(pheatmap(sampleDistMatrix,
@@ -177,7 +206,7 @@ dds <- DESeq(dds)
 res <- results(dds)
 
 # view the group names
-resultsNames(dds)
+#resultsNames(dds)
 
 # the effect of treatment in MANF (the main effect)
 res_treatment_MANF <- results(dds, name="treatment_Food_Restriction_vs_Ad_lib")
@@ -188,17 +217,17 @@ res_treatment_SARA <- results(dds, contrast=list(c("treatment_Food_Restriction_v
 res_interaction <- results(dds, name="treatmentFood_Restriction.mouselineSARA")
 # the effect of mouseline in Ad_lib
 res_mouseline <- results(dds, name="mouseline_SARA_vs_MANF")
-# what is the difference between SARA and MANF without treatment?
+# what is the difference between SARA and MANF without treatment? (same as the effect of mouseline in Ad_lib)
 #res_mouseline <- results(dds, contrast=c("mouseline", "SARA", "MANF"))
-# with treatment, what is the difference between SARA and MANF? (double check)
+# with treatment, what is the difference between SARA and MANF?
 res_mouseline_treatment <- results(dds, contrast=list(c("mouseline_SARA_vs_MANF", "treatment_Food_Restriction_vs_Ad_lib")))
 
 # summarize some basic tallies
-summary(res_treatment_MANF)
-summary(res_treatment_SARA)
-summary(res_interaction)
-summary(res_mouseline)
-summary(res_mouseline_treatment)
+#summary(res_treatment_MANF)
+#summary(res_treatment_SARA)
+#summary(res_interaction)
+#summary(res_mouseline)
+#summary(res_mouseline_treatment)
 
 # retrieve information about which variables and tests were used
 #mcols(res_mouseline_treatment_diff)$description
@@ -225,11 +254,11 @@ resOrdered_mouseline <- resOrdered_mouseline[, c("geneID", "baseMean", "log2Fold
 resOrdered_mouseline_treatment <- resOrdered_mouseline_treatment[, c("geneID", "baseMean", "log2FoldChange", "lfcSE", "stat", "pvalue", "padj")]
 
 # save the ordered results to a csv file
-write.csv(resOrdered_treatment_MANF, file="resOrdered_treatment_MANF.csv", quote = FALSE, row.names = FALSE)
-write.csv(resOrdered_treatment_SARA, file="resOrdered_treatment_SARA.csv", quote = FALSE, row.names = FALSE)
-write.csv(resOrdered_interaction, file="resOrdered_interaction.csv", quote = FALSE, row.names = FALSE)
-write.csv(resOrdered_mouseline, file="resOrdered_mouseline.csv", quote = FALSE, row.names = FALSE)
-write.csv(resOrdered_mouseline_treatment, file="resOrdered_mouseline_treatment.csv", quote = FALSE, row.names = FALSE)
+write.csv(resOrdered_treatment_MANF, file="treatment_MANF_results_ordered.csv", quote = FALSE, row.names = FALSE)
+write.csv(resOrdered_treatment_SARA, file="treatment_SARA_results_ordered.csv", quote = FALSE, row.names = FALSE)
+write.csv(resOrdered_interaction, file="interaction_results_ordered.csv", quote = FALSE, row.names = FALSE)
+write.csv(resOrdered_mouseline, file="mouseline_results_ordered.csv", quote = FALSE, row.names = FALSE)
+write.csv(resOrdered_mouseline_treatment, file="mouseline_treatment_results_ordered.csv", quote = FALSE, row.names = FALSE)
 
 # check the number of adjusted p-values were less than 0.05
 sum(resOrdered_treatment_MANF$padj < 0.05, na.rm=TRUE)
@@ -252,7 +281,7 @@ res05_interaction <- na.omit(res05_interaction)
 res05_mouseline <- na.omit(res05_mouseline)
 res05_mouseline_treatment <- na.omit(res05_mouseline_treatment)
 
-# test with the adjusted p-value cut offs
+# test with the cut offs
 #res05_treatment_MANF <- results(dds, name="treatment_Food_Restriction_vs_Ad_lib", alpha=cutFDR, lfcThreshold=cutLFC)
 #res05_treatment_SARA <- results(dds, contrast=list(c("treatment_Food_Restriction_vs_Ad_lib", "treatmentFood_Restriction.mouselineSARA")), alpha=cutFDR, lfcThreshold=cutLFC)
 #res05_interaction <- results(dds, name="treatmentFood_Restriction.mouselineSARA", alpha=cutFDR, lfcThreshold=cutLFC)
@@ -266,12 +295,15 @@ res05_mouseline_treatment <- na.omit(res05_mouseline_treatment)
 #summary(res05_mouseline)
 #summary(res05_mouseline_treatment)
 
+# setup output file name
+res05_outFile <- paste0("padj", cutFDR, "_lfc", cutLFC, ".csv")
+
 # save the filtered results to a csv file
-write.csv(res05_treatment_MANF, file="treatment_MANF_padj0.05_lfc0.csv", quote = FALSE, row.names = FALSE)
-write.csv(res05_treatment_SARA, file="treatment_SARA_padj0.05_lfc0.csv", quote = FALSE, row.names = FALSE)
-write.csv(res05_interaction, file="interaction_padj0.05_lfc0.csv", quote = FALSE, row.names = FALSE)
-write.csv(res05_mouseline, file="mouseline_padj0.05_lfc0.csv", quote = FALSE, row.names = FALSE)
-write.csv(res05_mouseline_treatment, file="mouseline_treatment_padj0.05_lfc0.csv", quote = FALSE, row.names = FALSE)
+write.csv(res05_treatment_MANF, file=paste("treatment_MANF", res05_outFile, sep = "_"), quote = FALSE, row.names = FALSE)
+write.csv(res05_treatment_SARA, file=paste("treatment_SARA", res05_outFile, sep = "_"),, quote = FALSE, row.names = FALSE)
+write.csv(res05_interaction, file=paste("interaction", res05_outFile, sep = "_"),, quote = FALSE, row.names = FALSE)
+write.csv(res05_mouseline, file=paste("mouseline", res05_outFile, sep = "_"),, quote = FALSE, row.names = FALSE)
+write.csv(res05_mouseline_treatment, file=paste("mouseline_treatment", res05_outFile, sep = "_"),, quote = FALSE, row.names = FALSE)
 
 ##
 # Results Exploration
@@ -291,95 +323,99 @@ vsdSubset_mouseline_treatment <- vsdCounts[rownames(vsdCounts) %in% rownames(res
 ann_groups <- data.frame(
   treatment = as.factor(factors$treatment),
   mouseline = as.factor(factors$mouseline),
-  sex = as.factor(factors$sex),
   row.names = colnames(vsd))
 
 # setup annotation colors
 ann_colors <- list(
   treatment = c(plotColors[3], plotColors[4]),
-  mouseline = c("black", "grey"),
-  sex = c(plotColors[11], plotColors[6])
+  mouseline = c(plotColors[1], plotColors[2])
 )
 
 # setup annotation color names
 names(ann_colors[["treatment"]]) <- unique(factors$treatment)
 names(ann_colors[["mouseline"]]) <- unique(factors$mouseline)
-names(ann_colors[["sex"]]) <- unique(factors$sex)
 
-# create heatmap for DGE
-treatment_MANF_vst_dge <- as.ggplot(
-  pheatmap(vsdSubset_treatment_MANF, 
-           scale="row", 
-           annotation_col = ann_groups, 
-           annotation_colors = ann_colors,
-           #main="Heatmap of DE Genes", 
-           show_rownames = FALSE,
-           show_colnames = FALSE,
-           fontsize = 12,
-           color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
-)
-# save the plot to a png file
-ggsave("treatment_MANF_vst_dge.png", plot = treatment_MANF_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
-
-# create heatmap for DGE
-treatment_SARA_vst_dge <- as.ggplot(
-  pheatmap(vsdSubset_treatment_SARA, 
-           scale="row", 
-           annotation_col = ann_groups, 
-           annotation_colors = ann_colors,
-           #main="Heatmap of DE Genes", 
-           show_rownames = FALSE,
-           show_colnames = FALSE,
-           fontsize = 12,
-           color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
-)
-# save the plot to a png file
-ggsave("treatment_SARA_vst_dge.png", plot = treatment_SARA_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
-
-# create heatmap for DGE
-#interaction_vst_dge <- as.ggplot(
-#  pheatmap(vsdSubset_interaction, 
-#           scale="row", 
-#           annotation_col = ann_groups, 
-#           annotation_colors = ann_colors,
-           #main="Heatmap of DE Genes", 
-#           show_rownames = FALSE,
-#           show_colnames = FALSE,
-#           fontsize = 12,
-#          color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
-#)
-# save the plot to a png file
-#ggsave("interaction_vst_dge.png", plot = interaction_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
-
-# create heatmap for DGE
-mouseline_vst_dge <- as.ggplot(
-  pheatmap(vsdSubset_mouseline, 
-           scale="row", 
-           annotation_col = ann_groups, 
-           annotation_colors = ann_colors,
-           #main="Heatmap of DE Genes", 
-           show_rownames = FALSE,
-           show_colnames = FALSE,
-           fontsize = 12,
-           color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
-)
-# save the plot to a png file
-ggsave("mouseline_vst_dge.png", plot = mouseline_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
-
-# create heatmap for DGE
-mouseline_treatment_vst_dge <- as.ggplot(
-  pheatmap(vsdSubset_mouseline_treatment, 
-           scale="row", 
-           annotation_col = ann_groups, 
-           annotation_colors = ann_colors,
-           #main="Heatmap of DE Genes", 
-           show_rownames = FALSE,
-           show_colnames = FALSE,
-           fontsize = 12,
-           color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
-)
-# save the plot to a png file
-ggsave("mouseline_treatment_vst_dge.png", plot = mouseline_treatment_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
+# check if enough DE genes for plotting
+if (nrow(res05_treatment_MANF) > 2) {
+  # create heatmap for DGE
+  treatment_MANF_vst_dge <- as.ggplot(
+    pheatmap(vsdSubset_treatment_MANF, 
+             scale="row", 
+             annotation_col = ann_groups, 
+             annotation_colors = ann_colors,
+             #main="Heatmap of DE Genes", 
+             show_rownames = FALSE,
+             show_colnames = FALSE,
+             fontsize = 12,
+             color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
+  )
+  # save the plot to a png file
+  ggsave("treatment_MANF_vst_dge.png", plot = treatment_MANF_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
+} 
+if (nrow(res05_treatment_SARA) > 2) {
+  # create heatmap for DGE
+  treatment_SARA_vst_dge <- as.ggplot(
+    pheatmap(vsdSubset_treatment_SARA, 
+             scale="row", 
+             annotation_col = ann_groups, 
+             annotation_colors = ann_colors,
+             #main="Heatmap of DE Genes", 
+             show_rownames = FALSE,
+             show_colnames = FALSE,
+             fontsize = 12,
+             color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
+  )
+  # save the plot to a png file
+  ggsave("treatment_SARA_vst_dge.png", plot = treatment_SARA_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
+} 
+if (nrow(res05_interaction) > 2) {
+  # create heatmap for DGE
+  interaction_vst_dge <- as.ggplot(
+    pheatmap(vsdSubset_interaction, 
+             scale="row", 
+             annotation_col = ann_groups, 
+             annotation_colors = ann_colors,
+             #main="Heatmap of DE Genes", 
+             show_rownames = FALSE,
+             show_colnames = FALSE,
+             fontsize = 12,
+             color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
+  )
+  # save the plot to a png file
+  ggsave("interaction_vst_dge.png", plot = interaction_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
+} 
+if (nrow(res05_mouseline) > 2) {
+  # create heatmap for DGE
+  mouseline_vst_dge <- as.ggplot(
+    pheatmap(vsdSubset_mouseline, 
+             scale="row", 
+             annotation_col = ann_groups, 
+             annotation_colors = ann_colors,
+             #main="Heatmap of DE Genes", 
+             show_rownames = FALSE,
+             show_colnames = FALSE,
+             fontsize = 12,
+             color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
+  )
+  # save the plot to a png file
+  ggsave("mouseline_vst_dge.png", plot = mouseline_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
+} 
+if (nrow(res05_mouseline_treatment) > 2) {
+  # create heatmap for DGE
+  mouseline_treatment_vst_dge <- as.ggplot(
+    pheatmap(vsdSubset_mouseline_treatment, 
+             scale="row", 
+             annotation_col = ann_groups, 
+             annotation_colors = ann_colors,
+             #main="Heatmap of DE Genes", 
+             show_rownames = FALSE,
+             show_colnames = FALSE,
+             fontsize = 12,
+             color = colorRampPalette(c(plotColors[5], "white", plotColors[2]))(100))
+  )
+  # save the plot to a png file
+  ggsave("mouseline_treatment_vst_dge.png", plot = mouseline_treatment_vst_dge, bg = "white", device = "png", width = 9, height = 8, units = "in")
+}
 
 # sort results by gene name
 treatment_SARA_dge_results_tbl <- resOrdered_treatment_SARA[order(resOrdered_treatment_SARA$geneID), ]
@@ -415,25 +451,69 @@ DGE_log2FoldChange$Response_SARA_MANF <- gsub("SARA_None", "SARA", DGE_log2FoldC
 DGE_log2FoldChange$Response_SARA_MANF <- gsub("None_MANF", "MANF", DGE_log2FoldChange$Response_SARA_MANF)
 DGE_log2FoldChange$Response_SARA_MANF <- gsub("SARA_MANF", "Both", DGE_log2FoldChange$Response_SARA_MANF)
 
+# check the unique response categories
+#unique(DGE_log2FoldChange$Response_SARA_MANF)
+
 # turn on scientific notation
 options(scipen = 0)
 
-# SARA_MANF plots
 # order data frames
-#custom_order <- c("None", "SARA", "MANF", "Both")
 custom_order <- unique(DGE_log2FoldChange$Response_SARA_MANF)
 DGE_log2FoldChange_sorted <- DGE_log2FoldChange %>%
   arrange(match(Response_SARA_MANF, custom_order))
+
 # scatter plots of log2 FC with correlations
-jpeg("treatment_SARA_MANF_dge_LFC_cor.jpg")
+jpeg("treatment_SARA_MANF_dge_LFC_spearman_rho.jpg")
 ggplot(DGE_log2FoldChange_sorted, aes(x = SARA_LFC, y = MANF_LFC, color = Response_SARA_MANF)) + 
   geom_point(aes(alpha = Response_SARA_MANF)) +
   geom_smooth(method = "lm", color = "darkred", se = TRUE) +
-  stat_cor(method = "pearson") +
-  scale_alpha_manual(values = c("None" = 0.2, "SARA" = 0.75, "MANF" = 0.75, "Both" = 0.75)) + 
-  #scale_alpha_manual(values = c("None" = 0.2, "MANF" = 0.75, "Both" = 0.75)) + 
-  scale_color_manual(values = c("None" = "#BEBEBE", "SARA" = plotColors[4], "MANF" = plotColors[6], "Both" = plotColors[7])) +
-  #scale_color_manual(values = c("None" = "#BEBEBE", "MANF" = plotColors[6], "Both" = plotColors[7])) +
+  stat_cor(method = "spearman", cor.coef.name = "rho") +
+  #scale_alpha_manual(values = c("None" = 0.2, "SARA" = 0.75, "MANF" = 0.75, "Both" = 0.75)) + 
+  scale_alpha_manual(values = c("None" = 0.2, "MANF" = 0.75, "Both" = 0.75)) + 
+  #scale_color_manual(values = c("None" = "#BEBEBE", "SARA" = plotColors[4], "MANF" = plotColors[6], "Both" = plotColors[7])) +
+  scale_color_manual(values = c("None" = "#BEBEBE", "MANF" = plotColors[6], "Both" = plotColors[7])) +
   labs(x = "SARA log2 FC", y = "MANF log2 FC") +
-  theme_minimal()
+  theme_minimal() #+
+  #ylim(-5, 5) +
+  #xlim(-5, 5)
+dev.off()
+
+# scatter plots of log2 FC with correlations zoomed in to -5 and 5 LFC
+jpeg("treatment_SARA_MANF_dge_LFC_spearman_rho_neg5_pos5.jpg")
+ggplot(DGE_log2FoldChange_sorted, aes(x = SARA_LFC, y = MANF_LFC, color = Response_SARA_MANF)) + 
+  geom_point(aes(alpha = Response_SARA_MANF)) +
+  geom_smooth(method = "lm", color = "darkred", se = TRUE) +
+  stat_cor(method = "spearman", cor.coef.name = "rho") +
+  #scale_alpha_manual(values = c("None" = 0.2, "SARA" = 0.75, "MANF" = 0.75, "Both" = 0.75)) + 
+  scale_alpha_manual(values = c("None" = 0.2, "MANF" = 0.75, "Both" = 0.75)) + 
+  #scale_color_manual(values = c("None" = "#BEBEBE", "SARA" = plotColors[4], "MANF" = plotColors[6], "Both" = plotColors[7])) +
+  scale_color_manual(values = c("None" = "#BEBEBE", "MANF" = plotColors[6], "Both" = plotColors[7])) +
+  labs(x = "SARA log2 FC", y = "MANF log2 FC") +
+  theme_minimal() +
+  ylim(-5, 5) +
+  xlim(-5, 5)
+dev.off()
+
+# create combined list of DE gene names
+treatment_list_venn <- list(SARA = res05_treatment_SARA$geneID, MANF = res05_treatment_MANF$geneID)
+treatment_pos_list_venn <- list(SARA = res05_treatment_SARA[res05_treatment_SARA$log2FoldChange > 0, "geneID"], MANF = res05_treatment_MANF[res05_treatment_MANF$log2FoldChange > 0, "geneID"])
+treatment_neg_list_venn <- list(SARA = res05_treatment_SARA[res05_treatment_SARA$log2FoldChange < 0, "geneID"], MANF = res05_treatment_MANF[res05_treatment_MANF$log2FoldChange < 0, "geneID"])
+
+# compare numbers of DE genes
+jpeg("treatment_SARA_MANF_venn.jpg")
+ggVennDiagram(treatment_list_venn, label_alpha=0.25, category.names = c("SARA","MANF")) +
+  scale_x_continuous(expand = expansion(mult = .2)) +
+  scale_fill_gradientn(colors = c(plotColors[1], plotColors[2]))
+dev.off()
+# compare numbers of pos DE genes
+jpeg("treatment_SARA_MANF_venn_pos.jpg")
+ggVennDiagram(treatment_pos_list_venn, label_alpha=0.25, category.names = c("SARA","MANF")) +
+  scale_x_continuous(expand = expansion(mult = .2)) +
+  scale_fill_gradientn(colors = c(plotColors[1], plotColors[2]))
+dev.off()
+# compare numbers of neg DE genes
+jpeg("treatment_SARA_MANF_venn_neg.jpg")
+ggVennDiagram(treatment_neg_list_venn, label_alpha=0.25, category.names = c("SARA","MANF")) +
+  scale_x_continuous(expand = expansion(mult = .2)) +
+  scale_fill_gradientn(colors = c(plotColors[1], plotColors[2]))
 dev.off()
